@@ -1,0 +1,6 @@
+title|KnProxy 浏览器
+message|请在上方地址栏中输入您要访问的地址.
+navigate|跳转到：
+encode|加密地址
+debug|调试模式
+hide_bar|隐藏地址栏

@@ -1,0 +1,167 @@
+-- Bugfix (Ver 4.34) --
+-Fixes typo in includes/module_http.php:143 heaer
+-Fixes undefined index error index.php:28 for HTTPS detection
+-Fixes bug #3419799 in SF tracker, escapes ampersands in url possibly with them (still testing)
+-"about:" pages introduced
+
+-- Bugfix (Ver 4.33) --
+-Fixed serious bug on version 4.32 encryption module accidentally sending unencrypted url in GET
+ All users on 4.32, if highly security conscious, are STRONGLY RECOMENDED to upgrade or disable the navbar!
+-Changed the random number key generator to use a higher region
+-Fixed bug in Url Parser processing empty path strings (link to file on root of host)
+
+-- New Release (Ver 4.32) --
+- Added Navigation Bar Feature (default on) to show addresses (Requires support for frames)
+- Improved basic encryption
+- Fixed small problem in Url Parser with url fragments
+- Fixed problems JS url parsing, now only parses url inside of strings.
+- Allows users to set 'Blank Referer'
+- Users can opt to shut off GZIP retreiving (many free servers do not support gzip decoding) and force remote servers to return unzipped
+- Tested with Acid3 obtaining score of 92/100
+- Internationalization Supported!
+
+-- New Release (Ver 4.30) --
+- Rewritten the URL parser, solving parsing problems for many URLs
+- Fixed POST/GET determination method. Solves problem of mistaking post for GET forms
+- Fixed problems with addresses embedded in JS
+- Fixed problems with REGEX exceeding pcre recursive/backtrack limits and returning blank pages
+
+-- New Release (Ver 4.28) --
+-Fixed BUG #3374265, #3379261
+ Problem with file encoding and Problem of jumping out of ssl
+-Updated the main interface to prevent re-submitting the form causing address to be double-encrypted
+-Fixed bug in error message to filter HTML injections
+-Fixed problem parsing some GET forms
+-Respects 'refresh:' http headers now
+
+-- Bugfix --
+-Fixed newline encoding in includes/plugins/youtube.php to UNIX because it caused problems
+
+-- New Release (Ver 4.26) --
+-Fixed bug with parser that changed almost all POST forms into GET forms
+-Added native support for KnProxy V5
+
+-- New Release (Ver 4.25) --
+-Updated URL Parser removing problems generated in last bugfix
+-Updated parser to ignore <! beginning tags (namely <!-- and <![CDATA[)
+-Can now parse @import with "" '' wrapping strings
+-New default salt
+
+-- Bugfix (Ver 4.24 BUGFIX) --
+-Fixed serious problem with last release caused by debugging code not removed
+ Sorry about that.
+
+-- New Release (Ver 4.24) --
+-Now officially supports GET forms
+ Which allows 'Google Search' To WORK :D
+-Pushed new default SECRET into effect. Please omit config.php if you still wish to keep your urls.
+-Support for You*Tube videos is in place though you cannot choose def rates [PACK:SSE-2011-07-10-PV2] Sites: You*tube
+-Rolled back url parser as problems occurred in new version.
+
+-- New Release (Ver 4.22) --
+-Resolved Bug Artifacts #3358326 #3333079 on SourceForge Tracker
+-Updated Parser to only process urls inside of tags
+-Updated URL Parsing module resolving errors while processing urls like
+ ?somewhere=http://someaddress/somepath/?something or /somepath/http://somesite/somepath2/
+
+-- New Release (Ver 4.19) --
+-Solved Warning Messages when php is in strict mode. 
+ (Thanks to bug report from zhongxiaolee AT gmail DOT com)
+-KNEN_SECRET allows you to define a salt for address encryption
+ ( Graduated from -dev branch!)
+-Supports GZIP on HTML/CSS/JS and other MIME:text/* files! Can be disabled in conf.php
+-Autodetect page encoding (to be used in ver 4.2x for Page Encryption)
+-Changed default interface to be slimmer (smaller download size)
+
+-- Bugfix (Ver 4.16)--
+-Fixed bug when parsing url( in css tags when there is a space after the bracket.
+ Solves problem with some @import url( somewhere ); situations
+
+-- New Release (Ver 4.15) --
+-Added support for HTTP basic authentication (username and password stored in cookies)
+-Enhanced parsing engine for JS urls (better support for face*book and google ajax calls!)
+ Tested on Facebook, can now post status/share and all kinds of messages!
+ This works for general websites as well!
+-Site Specific Enhancements [PACK:SSE-2011-06-11-PV1] Sites: Facebook
+-Lets 404 error pages pass through instead of getting handled! (because some error pages are creative ^_^)
+
+-- Development Release (Ver 4.10-dev) --
+-Note: The DEV branch is for small features that are seasonal and used to defeat GFW
+ They do not provide a big improvement if you are using outside of China or networks
+ that have intensive censorship.
+ DEV branches will have a chinese versionlog file to guide users. It will not be included 
+ in the main builds.
+ Some features may eventually graduate from the dev into the main builds, others will only
+ remain in dev.
+-Added support for cloud proxying (still testing)
+-Added config file. You can set your own proxy key to avoid url being caught by GFW.
+-Added Chinese Versionlog (note: only dev versions have the chinese Versionlog)
+
+-- New Release (Ver 4.10) --
+-Edited the parser to support parsing of style= inside an HTML tag
+ Note: This fixes the problem of the Google logo not showing up
+-Added a small filter for urls captured in JS to remove \" and \/ stuff.
+-Fixed small problem in page encryption, but still doesn't decode GB2312 correctly
+
+
+-- New Release (Ver 4.08) --
+-Added page encryption support(disabled by default)
+ The GFW experienced an upgrade in blocking techniques.
+ This new version solves problem with page encryption
+ Small enhancement for users in China
+
+ 
+-- New Release (Ver 4.07) --
+-Fixed bug in knHTTP module. Only one request is sent to get headers and body.
+-Fixed bug in parser for mime types
+-Fixed regression problems in SSL enable/disable checks
+-Added a JS for future use of enhanced client-side parsing
+
+-- New Release (Ver 4.05) --
+-Limited SSL Support included with a warning dialog
+-Solved problem parsing cookies with Expire dates
+-Solved problem of wrongly parsing Location: tags when X-Something-Location: was present
+-Minor Enhancement for parser to find the mime type more accurately
+
+-- Bugfix (Ver 4.01) --
+-Last upload was not final v4 version!
+-Fixed bug in parsing engine that didnt change the 'action=' field in html forms resulting in unproxified forms
+ Now can work with f*cebook logins and all sorts of logins!
+-Fixed bug in URL parser. Now ignores javascript tags, data url scheme and anchors (eg 'javascript:','data:','#anchor').
+-Added debug mode, if you get a blank white screen on loading a page, try adding &debug=true to the end of the url
+ you will enter debug mode. You can send the debug data to me at j_abbany@yahoo.ca or (if you can) solve it by yourself.
+
+-- Initial release (Ver 4.00) --
+Knproxy Theta (v4) is out with loads of new improvements!!
+=======
+1. Slimmer Engine
+The method used for fetching and parsing has been greatly slimmed down. Knproxy now runs on half the processing resources!
+
+2. Improved Parsing
+New specialized parsing for css/js and html with checks on MIME type to give the best optimized effect.
+ The regexes have also been fixed meaning a compatibility for more websites. Tags with href=" href=' and href= are all supported in this version.
+ CSS parsing improvements prevent the page suffering from bad css.
+ JS scripts are basically ignored to speed up the loading.
+ Also, images and other attachments need not go through the parsing engine to prevent breaking (if a good content type is sent).
+
+3. Better Support for POST forms and COOKIEs
+Support for POST and COOKIES is now built into the knHTTP request engine. (And needs no special plugin as in v3)
+COOKIES can now be stored locally instead of on server and are loaded faster.
+GET requests are on the way!
+
+4. Improved Error Checking
+Error checks are built in natively. Tons of debugging info given on error to help pinpoint problem.
+
+5. Native Encoding
+Now, encoding for URL is embedded natively and not plugged in. However, we currently only support KNEN.
+(You can implement your own obfuscation method!)
+
+6. Speedup
+Lots of redundant code removed. Proxy modualized and functions separately. Greatly reduced the size of master file!
+
+7. Supports Shifting Code
+You can give a shift value for the encoding to avoid blacklists. Though currently addresses are static.
+
+Enjoy~
+Author Jabbany
+ 

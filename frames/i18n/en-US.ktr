@@ -1,0 +1,7 @@
+title|KnProxy Browser
+css|.mymsg{font-family:Verdana;font-weight:normal;}
+message|Please provide a URL in the navigation bar.
+navigate|Navigate to:
+encode|Encode URL
+debug|Debug Mode
+hide_bar|Hide Address Bar

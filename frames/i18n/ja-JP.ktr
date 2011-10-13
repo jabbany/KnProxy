@@ -1,0 +1,7 @@
+title|KnProxy ブラウザ
+css|.mymsg{font-family:"Meiryo","MS Mincho",Verdana;font-weight:normal;}
+message|URLを入力してください
+navigate|移動する
+encode|URL暗号化
+debug|デバッグ
+hide_bar|URLバーを非表示
