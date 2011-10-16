@@ -37,13 +37,6 @@ $url = checkHttpUrl($url);
 	}
 	$_SCRIPT =$_HOST . $_SERVER['SCRIPT_NAME'];
 
-
-if(isset($_POST['force_http']) || isset($_POST['knprox_force_unsecure']) && ($_POST['force_http'] || $_COOKIE['knprox_force_unsecure']=='true')){
-	$url = preg_replace('~^https:~iUs','http:',$url);
-	if(!isset($_COOKIE['knprox_force_unsecure']))
-		setcookie('knprox_force_unsecure','true',0);
-}
-
 $knURL = new knUrl();
 $knURL->setBaseurl($url);
 $knHTTP = new knHttp($url);
@@ -84,17 +77,13 @@ elseif($knHTTP->is_secure && isset($_POST['yes'])){
 	setcookie('knprox_ssl_warning','off',2147483647);
 }
 $headers = $knHTTP->parseHeader();
-if((isset($_GET['debug']) && $_GET['debug']=='true') || (isset($_COOKIE['knprox_syst_debug']) && $_COOKIE['knprox_syst_debug']=='true')){
+if(isset($_GET['debug']) && $_GET['debug']=='true'){
 	$eobj=Array('status'=>1994);//AUTOMATICALLY RE ENABLE SSL WARNINGS
-	setcookie('knprox_ssl_warning','on',0);
-	setcookie('knprox_force_unsecure','false',0);
-	setcookie('knLogin','',-1);
-	if(isset($_GET['set_debug_cookie'])){
-		setcookie('knprox_syst_debug','true',2147483647);
-	}
+	setcookie('knprox_ssl_warning','on',1);
+	setcookie('knLogin','',1);
 	if(isset($_GET['clear_cookies']) && $_GET['clear_cookies']=='true'){
 		foreach($_COOKIE as $key=>$val){
-			setcookie($key,'__',-1);
+			setcookie($key,'deleted',1);
 		}
 	}
 	include('includes/gui_error.php');
@@ -107,7 +96,7 @@ if($headers['status']==401){
 	exit();
 }
 header('HTTP/1.1 ' . $headers['status']);
-if(((int)$headers['status']>400 && (int)$headers['status']!=404)|| (int)$headers['status']<1){
+if(((int)$headers['status']>=400 && (int)$headers['status']!=404)|| (int)$headers['status']<1){
 	$eobj=Array('status'=>$headers['status']);
 	include('includes/gui_error.php');
 	exit();
@@ -119,23 +108,23 @@ if(isset($headers['content-disposition']) && $headers['content-disposition']!=''
 if(isset($headers['location']) && $headers['location']!=''){
 	$url = $knURL->getAbsolute($headers['location']);
 	$knurl = $knEncoder->encode($url);
-	if($_GET['enp']=='true')
-		$nURL = basename(__FILE__) . "?enp=true&url=" . $knurl;
-	else
-		$nURL = basename(__FILE__) . "?url=" . $knurl;
+	$nURL = basename(__FILE__) . "?url=" . $knurl;
 	header('Location: ' . $nURL );
 }
 if(isset($headers['refresh'])){
-	if($_GET['enp']=='true'){
-		$pre=basename(__FILE__) . '?enp=true&url=';
-	}else
-		$pre=basename(__FILE__) . '?url=';
+	$pre=basename(__FILE__) . '?url=';
 	header('refresh:'.(int)$headers['refresh']['time'].';url='. $pre . $knEncoder->encode($knURL->getAbsolute($headers['refresh']['location'])));
 }
 if(isset($headers['cookies']) && is_array($headers['cookies']))
-foreach($headers['cookies'] as $key=>$value){
-	setcookie($key,$value,2147483647);
-}
+	foreach($headers['cookies'] as $key=>$value){
+		$cookieValue = $value[0];
+		if($value[1]!=''){
+			$expires = strtotime($value[1]);
+			setcookie($key,$cookieValue,$expires);
+		}else{
+			setcookie($key,$cookieValue);//Session cookie
+		}
+	}
 $knParser = new knParser($knURL,$knHTTP->content,$_SCRIPT . '?url=');
 $knParser->setMimeType($knHTTP->doctype);
 $knParser->setCharset($knHTTP->doctype,$knHTTP->content);
@@ -147,9 +136,8 @@ if(defined('ALLOW_YOUTUBE') && ALLOW_YOUTUBE=='true'){
 		$knParser->setPluginEngine($engine);
 	}
 }
-if(isset($_GET['enp']) && $_GET['enp']=='true'){
+if(defined('ENCRYPT_PAGE') && ENCRYPT_PAGE=='true'){
 	if($knParser->type=='text/html' || $knParser->type==''){
-		$knParser->url_prefix = '?enp=true&url=';
 		$t = '<script language="javascript" type="text/javascript" src="js/denjihou.js"></script>';
 		$t.= '<script language="javascript" type="text/javascript">';
 		$knParser->set_value('use_page_encryption',true);

@@ -124,6 +124,12 @@ class knParser{
 	}
 	function parseScriptStrings($strings){
 		$str = $strings[2];
+		/*
+		if(preg_match('~^https*://~iUs',$str)){
+			$tmp = $this->url->getAbsolute($str);
+			$urlDec = $this->stdEncoder->encode($tmp);
+			return $strings[1] . $this->url_prefix . $urlDec . $strings[1];
+		}*/
 		$str = preg_replace_callback('~(href|src|codebase|url|action)\s*=\s*([\'\"])?(?(2) (.*?)\\2 | ([^\s\>]+))~isx',array('self','parseExtURL'),$str);
 		return $strings[1] . $str . $strings[1];
 	}
@@ -131,7 +137,7 @@ class knParser{
 		$tagInner = preg_replace('~#knproxy_script_lt#~iUs','<',$matches[2]);
 		$tagInner = preg_replace('~\\\~','#knproxy_script_escape#',$tagInner);//REMOVE ESCAPES
 		$tagInner = preg_replace_callback('~([\'\"])(.+)\\1~',Array('self','parseScriptStrings'),$tagInner);
-		$tagInner = preg_replace_callback('~location\.replace\(([\'"])(.*)\1\)~iUs',Array('self','parseScriptTagURLReloc'),$tagInner);
+		$tagInner = preg_replace_callback('~location\.replace\(([\'"])(.*)\\1\)~iUs',Array('self','parseScriptTagURLReloc'),$tagInner);
 		$tagInner = preg_replace('~#knproxy_script_escape#~','\\',$tagInner);
 		return '<script' . $matches[1] . '>' . $tagInner . '</script>';
 	}

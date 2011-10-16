@@ -13,7 +13,7 @@ $_LANG = KNPROXY_LANGUAGE;
 <script language="javascript" type="text/javascript" src="../js/denpa.js?<?php echo time();?>"></script>
 <script language="javascript" type="text/javascript" src="../js/denjihou.js?<?php echo time()-56;?>"></script>
 <script language="javascript" type="text/javascript">
-<!--
+//<!--
 function checkAndEncode(){
 	if(document.getElementById("check_enc").checked){
 		var random = Math.floor(Math.random() * 255)+1;
@@ -26,7 +26,7 @@ function checkAndEncode(){
 		return true;
 	}
 }
--->
+//-->
 </script>
 <style>body{background: #000000;color: #ffffff;}a{color: #ffffff;}</style></head>
 <body style="height:50px;position:fixed;top:0;left:0;width:100%;">
@@ -34,7 +34,7 @@ function checkAndEncode(){
 <form name="KN_BFORM" action="../index.php" method="GET" target="dynamic" onsubmit="return checkAndEncode();">
 <div style="height: 45px;padding: 0px;">
 <input type="submit" value="<?php echo knproxy_i18n('navigate',$_LANG);?>" style="font-size: 1em;">
-<input type="hidden" id="url" name="url" value=""/>
+<input type="hidden" id="url" name="url" value="" />
 <input type="text" id="url_" size="65%" value="http://" ondblclick="this.value='';" style="font-family: Arial;font-weight: bold;font-size: 1em;">
 <input type="checkbox" id="check_enc" value="1" CHECKED><?php echo knproxy_i18n('encode',$_LANG);?>&nbsp;
 <input type="checkbox" name="debug" value="true"><?php echo knproxy_i18n('debug',$_LANG);?>

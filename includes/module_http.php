@@ -106,16 +106,33 @@ class knHttp{
 		if(!defined('ACCEPT_ENCODING_GZIP') || ACCEPT_ENCODING_GZIP !='true'){
 			@curl_setopt($curl,CURLOPT_ENCODING,''); 
 		}
-		if(defined('NO_REFERER') && NO_REFERER=='true'){
-			@curl_setopt($ch, CURLOPT_REFERER,'');//BLANK REFERER 
-			@curl_setopt($ch,CURLOPT_AUTOREFERER,true);
+		if(defined('REFERER')){
+			switch(REFERER){
+				case 'disable':
+					@curl_setopt($ch, CURLOPT_REFERER,'');//BLANK REFERER 
+					@curl_setopt($ch,CURLOPT_AUTOREFERER,true);
+				break;
+				case 'pseudo':{
+					@curl_setopt($ch, CURLOPT_REFERER,$this->url);//SELF REFERER 
+					@curl_setopt($ch,CURLOPT_AUTOREFERER,true);
+				}break;
+				case 'auto':{
+					@curl_setopt($ch,CURLOPT_AUTOREFERER,true);
+				}break;
+			}
 		}
 		curl_setopt($ch, CURLOPT_USERAGENT, $this->user_agent);
 		$raw = curl_exec($ch);
 		$this->doctype = @curl_getinfo($ch,CURLINFO_CONTENT_TYPE);
 		curl_close($ch);
-		$spl = preg_split('~\n\r*\n\r*~',$raw,2);
+		$spl = preg_split('~\r*\n\r*\n~',$raw,2);
 		$this->headers = $spl[0];
+		if(preg_match('~^http/1.\d \d+~iUs',$spl[1])){
+			//second split is also a header, may be because of HTTP/1.1 100 Continue
+			$splExt = preg_split('~\r*\n\r*\n~',$spl[1],2);
+			$this->headers .= "\n\r" . $splExt[0];
+			$spl[1] = $splExt[1];
+		}
 		if(defined('ACCEPT_ENCODING_GZIP') && ACCEPT_ENCODING_GZIP == 'true' && (preg_match('~\ncontent-encoding\s*:\s*gzip~iUs',$this->headers) || preg_match('~\ncontent-encoding\s*:\s*deflate~iUs',$this->headers)) && isset($spl[1]) && function_exists('gzinflate'))
 			$spl[1] = gzinflate($spl[1]);
 		if(isset($spl[1]))
@@ -130,9 +147,11 @@ class knHttp{
 			if(preg_match('~^location\s*:\s*(.*)$~iUs',$header,$matches))
 				$head['location'] = preg_replace('~\s~','',$matches[1]);
 			if(preg_match('~set-cookie:(.+)$~iUs',$header,$matches)){
-				$ckTemp = preg_replace('~;.*$~','',$matches[1]);
+				$ckTmp = explode(';',$matches[1]);
+				$ckTemp = $ckTmp[0];
+				$ckTime = preg_replace('~expires=~iUs','',$ckTmp[1]);
 				$cookie = explode('=',preg_replace('~\s~','',$ckTemp));
-				$head['cookies'][$cookie[0]]=$cookie[1];
+				$head['cookies'][$cookie[0]]=Array($cookie[1],$ckTime);
 			}
 			if(preg_match('~^www-authenticate\s*:\s*(\w)\s*~is',$header,$m)){
 				$head['www-authenticate-mode']=$m[1];

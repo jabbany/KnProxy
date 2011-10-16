@@ -6,7 +6,8 @@ define('ALLOW_YOUTUBE','true');
 define('ENABLE_JS_PARSING','true');
 define('ACCEPT_ENCODING_GZIP','true');
 define('ALLOW_NAVBAR','true');
-define('NO_REFERER','true');
+define('REFERER','pseudo');//Pseudo, Disable or auto
+define('ENCRYPT_PAGE','false');//是否加密页面，一般来说GFW不强烈时没必要启用
 define('OPTIMIZE_JAVASCRIPT','false');//优化JS（去除注释，降低下载量）
 
 /**********SET DEFAULT RUNTIME THINGS*************/

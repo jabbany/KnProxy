@@ -9,17 +9,14 @@ $_KNPROXY_NAVIGATOR_PAGE='navigator_bar.php';
 <HEAD>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" >
 <script language="javascript" type="text/javascript">
-<!--
-function url_change(URL)
-{
-	fixed.KN_BFORM.url.value=URL ;
-}
--->
+//<!--
+function url_change(URL){fixed.KN_BFORM.url.value=URL;}
+//-->
 </script>
 <TITLE><?php echo knproxy_i18n('title',$_LANG)?></TITLE>
 </HEAD>
 <FRAMESET rows="45,*" FRAMEBORDER="0" FRAMESPACING="0" BORDER="0" name="KNBROWSER_MAIN">
-  <FRAME name="fixed" src="<?php echo $_KNPROXY_NAVIGATOR_PAGE . '?lang=' . $_LANG;?>" marginwidth="2" marginheight="6" frameborder="0" noresize scrolling="no" >
-  <FRAME name="dynamic" src="dynami_index.php<?php echo '?lang=' . $_LANG;?>" frameborder="0" marginwidth="5" marginheight="5" >
+  <FRAME name="fixed" src="<?php echo $_KNPROXY_NAVIGATOR_PAGE;?>" marginwidth="2" marginheight="6" frameborder="0" noresize scrolling="no" >
+  <FRAME name="dynamic" src="dynami_index.php" frameborder="0" marginwidth="5" marginheight="5" >
 </FRAMESET>
 </HTML>

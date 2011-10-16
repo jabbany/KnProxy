@@ -1,3 +1,13 @@
+-- Feature Upgrade (Ver 4.36) --
+-Added 'Cookie Manager' accessable thru the url 'about:cookies'
+-Added 'System Internals' accessable thru url 'about:sysinternals' for debug
+ These can be closed by defining DISABLE_ABOUT_PAGES as true.
+-Fixed incorrect parsing of http header/body delimiters
+-Fixed problem with multiple headers on servers that support them (solves a few login bugs)
+-Now respects cookie expire times, cookies expire as defined or else are treated as session cookies.
+-Removed some unused/redundant code
+-Changed to pseudo-referer mode as default
+
 -- Bugfix (Ver 4.34) --
 -Fixes typo in includes/module_http.php:143 heaer
 -Fixes undefined index error index.php:28 for HTTPS detection
