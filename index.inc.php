@@ -1,10 +1,11 @@
 <?php
 include_once('conf.php');
-if(defined('ALLOW_NAVBAR') && ALLOW_NAVBAR=='true'){
+if(defined('KNPROXY_NAVBAR') && KNPROXY_NAVBAR=='true'){
 	header('Location: frames/');
 	exit();
 }
 ?>
+<!doctype html>
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" >

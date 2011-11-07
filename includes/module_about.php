@@ -12,8 +12,8 @@ function print_about_page($aboutType){
 <title>Cookie Manager</title>
 <script type="text/javascript">
 function delCookie(cname){
-	document.cookie=cname + "=deleted; Expires=Thu, 01-Jan-1970 00:00:01 GMT;";
-	document.cookie=cname + "=deleted; Expires=Thu, 01-Jan-1970 00:00:01 GMT; path=/;";
+	document.cookie=escape(cname) + "=deleted; Expires=Thu, 01-Jan-1970 00:00:01 GMT;";
+	document.cookie=escape(cname) + "=deleted; Expires=Thu, 01-Jan-1970 00:00:01 GMT; path=/;";
 }
 function delAllCookies(){
 	if(document.cookie=="")
@@ -31,10 +31,13 @@ function cookieList(){
 	for(i=0;i<arr.length;i++){
 		var tmp = arr[i].split("=");
 		if(tmp.length>1){
-			output +="<tr><td>" + escape(tmp[0]) + "</td><td>" + escape(tmp[1]) + "</td><td><a href=\"javascript:delCookie(\'" + tmp[0] + "\');document.getElementById(\'cookies\').innerHTML = cookieList();\">Delete</a></tr>"; 
+			output +="<tr><td>" + escape(tmp[0].replace(/^\\s/,\'\')) + "</td><td>" + escape(tmp[1]) + "</td><td><a href=\"javascript:delCookie(\'" + tmp[0] + "\');document.getElementById(\'cookies\').innerHTML = cookieList();\">Delete</a></tr>"; 
 		}else{
-			output +="<tr><td>(Cookie Jar Empty)</td><td>N/A</td><td></td></tr>";
+			//invalid cookie
 		}
+	}
+	if(arr.length==0){
+		output +="<tr><td>(Cookie Jar Empty)</td><td>N/A</td><td></td></tr>";
 	}
 	output+="</table>";
 	return output;
@@ -70,13 +73,15 @@ table td,table th{border:1px solid #000;padding:3px;}
 th{background:#ccccff;}
 </style>
 </head>
-<body><h2>About:SysInternals</h2><p>Here you can find default values for your installation of KnProxy. To disable this page, please set \'DISABLE_ABOUT_PAGES\' to true in the conf.php file!</p><table width="100%" cellpadding="0" cellspacing="0">';
+<body><h2>About : SysInternals</h2><p>Here you can find default values for your installation of KnProxy. To disable this page, please set \'DISABLE_ABOUT_PAGES\' to true in the conf.php file!</p><table width="100%" cellpadding="0" cellspacing="0">';
 		echo '<tr><th width="300px">Key</th><th>Value</th></tr>';
-		echo '<tr><td>Version</td><td>KnProxy 4.36 - beta</td></tr>';
+		echo '<tr><td>Version</td><td>KnProxy 4.40 - Beta</td></tr>';
 		echo '<tr><td>GUI Language</td><td>' . KNPROXY_LANGUAGE . '</td></tr>';
-		echo '<tr><td>Url Bar Enabled?</td><td>' . ALLOW_NAVBAR . '</td></tr>';
-		echo '<tr><td>Hide \'REFERER\'?</td><td>' . NO_REFERER . '</td></tr>';
-		echo '<tr><td>GZIP output?</td><td>' . USE_GZIP . '</td></tr>';
+		echo '<tr><td>Navbar Enabled</td><td>' . KNPROXY_NAVBAR . '</td></tr>';
+		echo '<tr><td>GZIP Output</td><td>' . KNPROXY_USE_GZIP . '</td></tr>';
+		echo '<tr><td>GZIP Input</td><td>' . KNPROXY_ACCEPT_GZIP . '</td></tr>';
+		echo '<tr><td>Warn on HTTPS</td><td>' . KNPROXY_HTTPS_WARNING . '</td></tr>';
+		echo '<tr><td>Referer mode</td><td>' . KNPROXY_REFERER . '</td></tr>';
 		if(function_exists('curl_init')){
 			echo '<tr><td>cURL enabled?</td><td style="color:#00a000;">true</td></tr>';
 			$cv=curl_version();
@@ -84,11 +89,18 @@ th{background:#ccccff;}
 		}else{
 			echo '<tr><td>cURL enabled?</td><td style="color:#ff0000;">false</td></tr>';
 		}
+		echo '<tr><td>Stream Mode</td><td>' . KNPROXY_STREAMING_AVAILABLE . '</td></tr>';
 		echo '<tr><td>PHP Version</td><td>' .phpversion() .'</td></tr>';
+		if(function_exists('memory_get_usage'))
+			echo '<tr><td>Memory Usage</td><td>' . memory_get_usage() .' bytes</td></tr>';
+		echo '<tr><td>Memory Limits</td><td>' . @ini_get('memory_limit') . '</td></tr>';
 		echo '</table>';
 		echo '<a href="javascript:history.back();"><br>Go Back to Previous Page</a></p>
 </body></html>';
 		}
+		case 'debugging':{
+			echo '<h1>Debugging Interface</h1>';
+		}break;
 		case 'blank':
 		default:{
 			echo '';

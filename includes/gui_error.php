@@ -17,13 +17,13 @@ The following information is the technical data of the request:
 <div style="font-family:monospace;background-color:#FFFFCC;margin-top:0px;padding:10px;word-wrap:break-all;word-break:break-all;overflow:hidden"><?php if($eobj['status']<1000) { ?>cURL returned : Request for <em class="a"><?php echo $knHTTP->url;?></em> was processed returning the following header : <br><em><?php echo $knHTTP->headers;?></em> (<?php echo strlen($knHTTP->headers);?> bytes)<br>
 The whole of content returned was <?php echo strlen($knHTTP->content);?> bytes of data. The Content-Type determined was <em><?php if($knHTTP->doctype){echo $knHTTP->doctype;}else{echo '(Could not determine)';}?></em>
 <?php } else {
-	$header = $knHTTP->parseHeader();
+	$header = $knHTTP->refined_headers();
 	echo 'Dumping knHTTP object: <br>';
 	echo '<em class="a">knHTTP request:</em> ' . preg_replace('~>~','&gt;',preg_replace('~<~','&lt;',$knHTTP->url)) . '<em>(' . strlen($knHTTP->url) . ' bytes)</em><br>';
 	if(isset($header['location']))
 		echo '<em class="a">knHTTP redirect:</em> ' . $header['location'] . '<br>';
 	echo '<em class="a">knHTTP is HTTPS mode:</em> ';
-	if($knHTTP->is_secure)
+	if($knHTTP->is_https)
 		echo '<em>True</em>';
 	else
 		echo '<em>False</em>';
@@ -32,7 +32,10 @@ The whole of content returned was <?php echo strlen($knHTTP->content);?> bytes o
 	echo '<em class="a">knHTTP cookies:</em> ' . $knHTTP->getCookies() . '<em>(' . strlen($knHTTP->getCookies()) . ' bytes)</em><br>';
 	echo '<em class="a">knHTTP headers:</em> <br>&nbsp;&nbsp;' . preg_replace('~\n\r*~','<br>&nbsp;&nbsp;',$knHTTP->headers) . '<em>(' . strlen($knHTTP->headers) . ' bytes)</em><br>';
 	echo '<em class="a">knHTTP return body length:</em> <em>' . strlen($knHTTP->content) . ' bytes</em><br>';
-	echo '<em class="a">knHTTP return body(html encoded):</em> <br>' . preg_replace('~\t~','&nbsp;&nbsp;&nbsp;&nbsp;',preg_replace('~\n\r*~','<br>',preg_replace('~<~','&lt;',$knHTTP->content))) . '<br>';
+	if(substr($knHTTP->doctype,0,6) =='audio/' || substr($knHTTP->doctype,0,6) =='video/' || strlen($knHTTP->content) > 40 * 1024 * 1024){
+		echo '<em class="a">knHTTP return body(partial):</em> <br>' . substr($knHTTP->content,0,(int)KNPROXY_BINARY_CUTOFF) . '<br>';
+	}else
+		echo '<em class="a">knHTTP return body(html encoded):</em> <br>' . preg_replace('~\t~','&nbsp;&nbsp;&nbsp;&nbsp;',preg_replace('~\n\r*~','<br>',preg_replace('~<~','&lt;',$knHTTP->content))) . '<br>';
 };?>
 </div><a href="javascript:history.back();"><br>Go Back to Previous Page</a></p>
 </body></html>

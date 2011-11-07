@@ -1,3 +1,14 @@
+-- Feature Upgrade (Ver 4.40) --
+-HTTP Request Module rewritten for better parsing of headers
+-Implemented HTTP sockets (very buggy) for compatability
+ HTTP Sockets is only a fallback for cURL if it is not available
+ HTTP Sockets has buggy support for chunked and normal encodings and get queries but limited url escaping
+ *IT DOES NOT SUPPORT POST REQUESTS OR HTTPS YET*
+-Added a pseudo 'STREAM MODE' which allows incremental download of data in stream-like manner for those extra-large files
+-Renamed many conf param names
+-Implemented progressive download if remote server supports it and forced progressive download if it doesnt
+-Fixed some errors in cookie manager
+
 -- Feature Upgrade (Ver 4.36) --
 -Added 'Cookie Manager' accessable thru the url 'about:cookies'
 -Added 'System Internals' accessable thru url 'about:sysinternals' for debug

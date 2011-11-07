@@ -1,12 +1,13 @@
 <?php
 include_once('knproxy_i18n.php');
 include_once('../conf.php');
-if(!defined('ALLOW_NAVBAR') || ALLOW_NAVBAR!='true'){
+if(!defined('KNPROXY_NAVBAR') || KNPROXY_NAVBAR!='true'){
 	header('HTTP/1.1 404 Not Found');
 	exit('<html><title>404 Not Found</title><h1>404 Not Found</h1></html>');
 }
 $_LANG = KNPROXY_LANGUAGE;
 ?>
+<!doctype html>
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" >
@@ -16,7 +17,7 @@ $_LANG = KNPROXY_LANGUAGE;
 //<!--
 function checkAndEncode(){
 	if(document.getElementById("check_enc").checked){
-		var random = Math.floor(Math.random() * 255)+1;
+		var random = Math.floor(Math.random() * 256)+1;
 		var url_value = document.getElementById("url_").value;
 		document.getElementById("url").value = encryptText(document.getElementById("url_").value,random);
 		document.getElementById("encrypt_key").value = random;

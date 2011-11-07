@@ -1,42 +1,64 @@
 <?php
+/*************
+ * HTTP REQUEST MODULE FOR KNPROXY THETA
+ * AUTHOR: CQZ
+ **************/
+@include_once('class_stream.php');
 class knHttp{
 	var $url='';
-	var $is_secure=false;
+	var $is_https=false;
 	var $user_agent='';
-	var $cookies=Array();
-	var $httpauth="";
-	var $http_post=Array();
-	var $http_get='';
+	var $cookies = Array();
+	var $httpauth = "";
+	var $http_post = Array();
+	var $http_get = '';
+	var $ranges = false;
+	protected $referer = '';
+	protected $streaming = false;
+	protected $mode = 'curl';
+	/* Return Values */
 	var $content;
 	var $headers;
 	var $doctype;
-	function __construct($url){
+	function __construct($url,$streaming = false){
 		$this->url = $url;
+		$this->streaming = $streaming;
 		$this->user_agent = $_SERVER['HTTP_USER_AGENT'];
+		$this->set_referer(KNPROXY_REFERER);
 		if(strtolower(substr($this->url,0,6))=='https:')
-			$this->is_secure=true;
+			$this->is_https=true;
 		else
-			$this->is_secure=false;
+			$this->is_https=false;
 		if(!function_exists('curl_init'))
-			return false;
+			$this->mode = 'filesockets';
 	}
-	function setUrl($url){
+	function force_mode($mode = 'filesockets'){
+		$this->mode = $mode;
+	}
+	function set_referer($referer = false){
+		if($referer === false){
+			$this->referer = KNPROXY_REFERER;
+		}else{
+			$this->referer = $referer;
+		}
+	}
+	function set_url($url){
 		$this->__construct($url);
 	}
-	function setCookies($cookies){
+	function set_cookies($cookies){
 		$this->cookies = $cookies;
 	}
-	function setPost($post){
+	function set_post($post){
 		$this->http_post=$post;
 	}
-	function setGet($getArray){
+	function set_get($getArray){
 		$get=Array();
 		foreach($getArray as $key=>$value){
 			$get[]=urlencode($key) . '=' . urlencode($value);
 		}
 		$this->http_get = implode('&',$get); 
 	}
-	function setLogin($unam,$pass){
+	function set_http_creds($unam,$pass){
 		if($unam!=false){
 			$this->httpauth=$unam . ':' . $pass;
 		}else{
@@ -77,7 +99,47 @@ class knHttp{
 			return $ret;
 		}
 	}
-	function send(){
+	function head(){
+		/** Head Calls check for availability **/
+		/** We can only support SAFE states in HEAD **/
+		if(count($this->http_post)>0)
+			return false; //POST calls not avaliable in HEAD request
+		$ch = curl_init();
+		$url = $this->url;
+		if($this->http_get!='')
+			if(substr_count('?',$this->url)>0){
+				$url = $this->url . '&'.$this->http_get;
+			}else{
+				$url = $this->url . '?'.$this->http_get;
+			}
+		curl_setopt($ch, CURLOPT_URL, $url);
+		if($this->is_https){
+			@curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+			@curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
+		}
+		if(count($this->cookies)>0){
+			@curl_setopt($ch, CURLOPT_COOKIE, $this->getCookies());
+		}
+		if($this->httpauth!=''){
+			@curl_setopt($ch, CURLOPT_USERPWD, $this->httpauth);
+		}
+		@curl_setopt($ch, CURLOPT_REFERER,$this->referer);
+		@curl_setopt($ch,CURLOPT_AUTOREFERER,true);
+		curl_setopt($ch, CURLOPT_USERAGENT, $this->user_agent);
+		curl_setopt($ch, CURLOPT_HEADER, true);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
+		$head = curl_exec($ch);
+		$this->headers = $head;
+		curl_close($ch);
+		return true;//Head Request Successful
+	}
+	function start_stream($ending = true){
+		/** Note: Streams are direct output and unbuffered in KnProxy! **/
+		/** No parsing takes effect in stream mode **/
+		if(!defined('KNPROXY_STREAMING_AVAILABLE') || !KNPROXY_STREAMING_AVAILABLE)
+			return false;//Unavailable
+		$tempName = dirname(__FILE__) . "/temp/" . 'temp_' . time() . '_' . mt_rand(0,9) ;
+		$fp = fopen($tempName, "wb");
 		$ch = curl_init();
 		if($this->http_get!=''){
 			if(substr_count('?',$this->url)>0){
@@ -86,10 +148,8 @@ class knHttp{
 				$this->url.='?'.$this->http_get;
 			}
 		}
-		@curl_setopt($ch, CURLOPT_URL, $this->url);
-		@curl_setopt($ch, CURLOPT_HEADER, 1);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-		if($this->is_secure){
+		curl_setopt($ch, CURLOPT_URL, $this->url);
+		if($this->is_https){
 			@curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
 			@curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
 		}
@@ -103,24 +163,136 @@ class knHttp{
 		if($this->httpauth!=''){
 			@curl_setopt($ch, CURLOPT_USERPWD, $this->httpauth);
 		}
-		if(!defined('ACCEPT_ENCODING_GZIP') || ACCEPT_ENCODING_GZIP !='true'){
+		if(!defined('KNPROXY_ACCEPT_GZIP') || KNPROXY_ACCEPT_GZIP!="true"){
 			@curl_setopt($curl,CURLOPT_ENCODING,''); 
 		}
-		if(defined('REFERER')){
-			switch(REFERER){
-				case 'disable':
-					@curl_setopt($ch, CURLOPT_REFERER,'');//BLANK REFERER 
-					@curl_setopt($ch,CURLOPT_AUTOREFERER,true);
-				break;
-				case 'pseudo':{
-					@curl_setopt($ch, CURLOPT_REFERER,$this->url);//SELF REFERER 
-					@curl_setopt($ch,CURLOPT_AUTOREFERER,true);
-				}break;
-				case 'auto':{
-					@curl_setopt($ch,CURLOPT_AUTOREFERER,true);
-				}break;
+		@curl_setopt($ch, CURLOPT_REFERER,$this->referer);
+		@curl_setopt($ch,CURLOPT_AUTOREFERER,true);
+		curl_setopt($ch, CURLOPT_USERAGENT, $this->user_agent);
+		curl_setopt($ch, CURLOPT_HEADER, 0);
+		curl_setopt($ch, CURLOPT_BUFFERSIZE, 256);//BUF_SIZ
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($ch, CURLOPT_FILE, $fp);
+		curl_exec($ch);
+		curl_close($ch);
+		fclose($fp);
+		if(is_resource($fp))
+			fclose($fp);
+		$fpN = fopen($tempName,'rb');
+		if(!$fpN)
+			return;//UnHandle Error
+		while(!feof($fpN)){
+			echo fread($fpN,2048);
+		}
+		fclose($fpN);
+		if(is_resource($fpN))
+			fclose($fpN);
+		@unlink($tempName);//Do a trash collection?
+		//Should we call the end of script?
+		if($ending)
+			exit();//Stop The Script to Prevent Corruption
+		return true;
+	}
+	protected function do_chunk_combine($chunked){
+		if(preg_match('~transfer-encoding:\s*chunked~iUs',$this->headers)){
+			//chunk iterate
+			$return = '';
+			$a = preg_split('~\r*\n~',$chunked,2);
+			$chunksize = hexdec($a[0]);
+			while($chunksize>0){
+				$return.=substr($a[1],0,$chunksize);
+				$chunked=preg_replace('~^\r*\n~','',substr($a[1],$chunksize,strlen($a[1])));
+				$a = preg_split('~\r*\n~',$chunked,2);
+				$chunksize = hexdec($a[0]);
+			}
+			return $return;
+		}
+		return $chunked;
+	}
+	function fsockets_send(){
+		/** Allows limited running in FileSockets mode, Buggy and not tested **/
+		if($this->http_get!=''){
+			if(substr_count('?',$this->url)>0){
+				$this->url.='&'.$this->http_get;
+			}else{
+				$this->url.='?'.$this->http_get;
 			}
 		}
+		$urlObj = new knURL();
+		$urlObj->setBaseurl($this->url);
+		if($this->is_https)
+			return;//Https Not Supported
+		$fp = fsockopen($urlObj->base['HOST'],80,$errno,$errstr);
+		if(!$fp){
+			//Action Failed
+			return;
+		}
+		//Create The HTTP Request
+		define('LB',"\r\n");
+		if(count($this->http_post))
+			$req = 'POST ' .  urlencode($urlObj->get_path($urlObj->base)) . ' HTTP/1.1' . LB;
+		else
+			$req = 'GET ' .  urlencode($urlObj->get_path($urlObj->base)) . ' HTTP/1.1' . LB;
+		$req.='Host: ' . $urlObj->base['HOST'].LB;
+		$req.='User-Agent: ' . $this->user_agent.LB;
+		$req.='Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' .LB;
+		if(count($this->cookies) > 0)
+			$req.='Cookie: ' . $this->getCookies() .LB;
+		$req.='Connection: Close'.LB;
+		$req.=LB;
+		//if(count($this->http_post)>0)
+		fputs($fp, $req);
+		$ret='';
+		while ($line = fgets($fp)) $ret .= $line; 
+		fclose($fp);
+		$spl = preg_split('~\r*\n\r*\n~',$ret,2);
+		$this->headers = $spl[0];
+		if(preg_match('~^http/1.\d \d+~iUs',$spl[1])){
+			//second split is also a header, may be because of HTTP/1.1 100 Continue
+			$splExt = preg_split('~\r*\n\r*\n~',$spl[1],2);
+			$this->headers .= "\n\r" . $splExt[0];
+			$spl[1] = $splExt[1];
+		}
+		
+		$this->content = $this->do_chunk_combine($spl[1]);
+	}
+	
+	function send(){
+		/** Added Support For Streaming Connections **/
+		if($this->streaming)
+			return;
+		if($this->mode!='curl')
+			return $this->fsockets_send();
+		$ch = curl_init();
+		if($this->http_get!=''){
+			if(substr_count('?',$this->url)>0){
+				$this->url.='&'.$this->http_get;
+			}else{
+				$this->url.='?'.$this->http_get;
+			}
+		}
+		@curl_setopt($ch, CURLOPT_URL, $this->url);
+		@curl_setopt($ch, CURLOPT_HEADER, 1);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		if($this->is_https){
+			@curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+			@curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
+		}
+		if(count($this->http_post)>0){
+			curl_setopt($ch, CURLOPT_POST,count($this->http_post));
+			curl_setopt($ch, CURLOPT_POSTFIELDS,$this->getPost());
+		}
+		if(count($this->cookies)>0){
+			@curl_setopt($ch, CURLOPT_COOKIE, $this->getCookies());
+		}
+		if($this->httpauth!=''){
+			@curl_setopt($ch, CURLOPT_USERPWD, $this->httpauth);
+		}
+		if(!defined('KNPROXY_ACCEPT_GZIP') || KNPROXY_ACCEPT_GZIP!="true"){
+			@curl_setopt($curl,CURLOPT_ENCODING,''); 
+		}
+		@curl_setopt($ch, CURLOPT_REFERER,$this->referer);
+		@curl_setopt($ch,CURLOPT_AUTOREFERER,true);
 		curl_setopt($ch, CURLOPT_USERAGENT, $this->user_agent);
 		$raw = curl_exec($ch);
 		$this->doctype = @curl_getinfo($ch,CURLINFO_CONTENT_TYPE);
@@ -133,37 +305,55 @@ class knHttp{
 			$this->headers .= "\n\r" . $splExt[0];
 			$spl[1] = $splExt[1];
 		}
-		if(defined('ACCEPT_ENCODING_GZIP') && ACCEPT_ENCODING_GZIP == 'true' && (preg_match('~\ncontent-encoding\s*:\s*gzip~iUs',$this->headers) || preg_match('~\ncontent-encoding\s*:\s*deflate~iUs',$this->headers)) && isset($spl[1]) && function_exists('gzinflate'))
+		if((preg_match('~\ncontent-encoding\s*:\s*gzip~iUs',$this->headers) || preg_match('~\ncontent-encoding\s*:\s*deflate~iUs',$this->headers)) && isset($spl[1]) && function_exists('gzinflate'))
 			$spl[1] = gzinflate($spl[1]);
 		if(isset($spl[1]))
 			$this->content = $spl[1];
 	}
-	function parseHeader(){
+	function refined_headers(){
 		$headers = explode("\n",preg_replace('~\r~','',$this->headers));
 		if(is_array($headers) && count($headers)>0)
-		foreach($headers as $header){
-			if(preg_match('~http/1\.\d+ (\d+) ~iUs',$header,$matches))
-				$head['status'] = (int)$matches[1];
-			if(preg_match('~^location\s*:\s*(.*)$~iUs',$header,$matches))
-				$head['location'] = preg_replace('~\s~','',$matches[1]);
-			if(preg_match('~set-cookie:(.+)$~iUs',$header,$matches)){
-				$ckTmp = explode(';',$matches[1]);
-				$ckTemp = $ckTmp[0];
-				$ckTime = preg_replace('~expires=~iUs','',$ckTmp[1]);
-				$cookie = explode('=',preg_replace('~\s~','',$ckTemp));
-				$head['cookies'][$cookie[0]]=Array($cookie[1],$ckTime);
+		foreach($headers as $line){
+			if(preg_match('~^http/\d+.\d+\s(\d+)\s~iUs',$line,$matches)){
+				$head['HTTP_RESPONSE'] = (int)$matches[1];
+				continue;
 			}
-			if(preg_match('~^www-authenticate\s*:\s*(\w)\s*~is',$header,$m)){
-				$head['www-authenticate-mode']=$m[1];
-			}
-			if(preg_match('~^www-authenticate\s*:.*realm="(.*)"~is',$header,$m)){
-				$head['www-authenticate-realm']=$m[1];
-			}
-			if(preg_match('~^content-disposition\s*:(.*)$~iUs',$header,$m)){
-				$head['content-disposition']= $m[1];
-			}
-			if(preg_match('~^refresh\s*:\s*(\d+);\s*url\s*=(.*)$~iUs',$header,$m)){
-				$head['refresh']=Array('time'=>$m[1],'location'=>$m[2]);
+			else{
+				$pair = preg_split('~:~',$line,2);
+				switch(preg_replace('~\s~','',strtoupper($pair[0]))){
+					case 'LOCATION':{
+						$head['HTTP_LOCATION'] = preg_replace('~^\s*~','',$pair[1]);						
+					}break;
+					case 'SET-COOKIE':{
+						$cookie = explode(';',$pair[1]);
+						if(is_array($cookie) && count($cookie)>1)
+							$cookie[1] = preg_replace('~expires\s*=\s*~iUs','',$cookie[1]);
+						else
+							$cookie[1] = '';
+						$cookie_ = preg_split('~=~iUs',preg_replace('~^\s*~','',$cookie[0]),2);
+						$head['HTTP_COOKIES'][] = Array($cookie_[0],$cookie_[1],$cookie[1]);
+					}break;
+					case 'WWW-AUTHENTICATE-MODE':{
+						$head['WWW_AUTHENTICATE_MODE'] = $pair[1];
+					}break;
+					case 'WWW-AUTHENTICATE':{
+						preg_match('~realm=([\'"])(.*)\\1~is',$pair[1],$m);
+						$head['WWW_AUTHENTICATE_REALM'] = $m[2];
+					}break;
+					case 'CONTENT-DISPOSITION':{
+						$head['CONTENT_DISPOSITION'] = $pair[1];
+					}break;
+					case 'REFRESH':{
+						$m = explode(';',$pair[1]);
+						$head['HTTP_REFRESH'] = Array((int)$m[0],preg_replace('~^\s*url\s*=(.*)$~iUs','$1',$m[1]));
+					}break;
+					case 'ACCEPT-RANGES':{
+						$head['ACCEPT_RANGES'] = preg_replace('~\s*~','',$pair[1]);
+					}break;
+					default:{
+						$head['UNKNOWN'] = Array($pair[0],$pair[1]);
+					}break;
+				}
 			}
 		}
 		return $head;

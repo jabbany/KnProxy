@@ -71,7 +71,7 @@ class knUrl{
 		$base = $this->base;
 		if($add['SCHEME']!=':relative')
 			return $this->output($add);
-		if($add['PATH'][0]=='/')
+		if(isset($add['PATH'][0]) && $add['PATH'][0]=='/')
 			$base['PATH'] = $add['PATH'];
 		else
 			$base['PATH'] .= $add['PATH'];
@@ -105,6 +105,20 @@ class knUrl{
 		}
 		if(isset($addr['FRAGMENT']))
 			$ret.="#" . $addr['FRAGMENT'];
+		return $ret;
+	}
+	/** Introduced to help FileSockets **/
+	function get_path($addr){
+		if(substr($addr['HOST'],strlen($addr['HOST'])-1,1)!='/' && ($addr['PATH']=="" || $addr['PATH'][0]!='/'))
+			$addr['PATH'] = '/' . $addr['PATH'];
+		$ret=$addr['PATH'] . $addr['FILE'];
+		if(isset($addr['QUERY'])){
+			if(!preg_match('~&[^a]~iUs',$addr['QUERY'])){
+				$addr['QUERY'] = preg_replace('~&amp;~iUs','&',$addr['QUERY']);
+				//ESCAPE THIS IF NEEDED!
+			}
+			$ret.='?' . $addr['QUERY'];
+		}
 		return $ret;
 	}
 }

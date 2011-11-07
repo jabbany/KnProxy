@@ -1,25 +1,23 @@
 <?php
-define('KNEN_SECRET','joWVexlW4fHeH/2GGNLefy8bV7JFaaTTF92AWp1k0jDsMqC8tqeAvdLo/gg');
+define('KNPROXY_SECRET','joWVexlW4fHeH/2GGNLefy8bV7JFaaTTF92AWp1k0jDsMqC8tqeAvdLo/gg');
 define('KNPROXY_LANGUAGE','zh-CN');//Set the language for Knproxy!
-define('USE_GZIP','true');
-define('ALLOW_YOUTUBE','true');
-define('ENABLE_JS_PARSING','true');
-define('ACCEPT_ENCODING_GZIP','true');
-define('ALLOW_NAVBAR','true');
-define('REFERER','pseudo');//Pseudo, Disable or auto
-define('ENCRYPT_PAGE','false');//是否加密页面，一般来说GFW不强烈时没必要启用
+define('KNPROXY_USE_GZIP','true');
+define('KNPROXY_ACCEPT_GZIP','true');
+define('KNPROXY_NAVBAR','true');
+define('KNPROXY_HTTPS_WARNING','on');//on, off
+define('KNPROXY_REFERER','pseudo');//Pseudo, Disable or auto
+define('KNPROXY_ENCRYPT_PAGE','false');//是否加密页面，一般来说GFW不强烈时没必要启用
+
 define('OPTIMIZE_JAVASCRIPT','false');//优化JS（去除注释，降低下载量）
+define('ENABLE_JS_PARSING','true');
 
-/**********SET DEFAULT RUNTIME THINGS*************/
-@ini_set('pcre.backtrack_limit', 10000000);//Prevent REGEXs from exceeding limit
+/** These values are for debugging **/
+define('KNPROXY_BINARY_CUTOFF',32*1024);//Cutoff of 32kb for binary data
+
+/** These values are for adjusting the PHP runtime **/
+@ini_set('pcre.backtrack_limit', 10000000);
 @ini_set('pcre.recursion_limit', 10000000);
-@ini_set('memory_limit','64M');//INCREASE MEMORY LIMIT
-@set_time_limit(180);//Run for 3 minutes at Most
-/**
-* 如果你访问的一些网站页面内嵌JS或CSS代码超过 100k 字符，有些服务器不允许执行正则表达式来处理它们。
-* 这些情况下，服务器可能会返回完全空白的页面
-* 如果你的服务器反复出现完全空白页面，请取消下面一行的注释，这将取消JAVASCRIPT解析
-**/
-//define('DISABLE_JAVASCRIPT_REGEX','true');
-
+@ini_set('memory_limit','128M');
+@set_time_limit(180);
+@error_reporting(0);
 ?>

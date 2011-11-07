@@ -34,7 +34,9 @@ class knParser{
 		}
 		if($this->charset==""){
 			preg_match('~<meta.*charset=(.+)["\'].*\>~iUs',$page_raw,$pmatch);
-			$this->charset = $pmatch[1];
+			if(count($pmatch)>0)
+				$this->charset = $pmatch[1];
+			
 		}
 		return $this->charset;
 	}
@@ -178,7 +180,7 @@ class knParser{
 		}
 		//ABOVE LINE ESCAPES THE < (lesser than) in JS SCRIPTS
 		$code = preg_replace_callback('~<([^!].*)>~iUs',Array('self','parseUrlHTML'),$code);
-		if(defined('ALLOW_NAVBAR') && ALLOW_NAVBAR=="true")
+		if(defined('KNPROXY_NAVBAR') && KNPROXY_NAVBAR=="true")
 			$code = preg_replace('~<\s*/\s*head\s*>~iUs','<script type="text/javascript" language="javascript">parent.fixed.document.getElementById(\'url_\').value=parent.fixed.knEncode.unBase64("' . base64_encode($this->url->output($this->url->base)) . '");</script></head>',$code);
 		$code = preg_replace_callback('~(<\s*style[^>]*>)(.*)<\s*/style\s*>~iUs',Array('self','parseCSS'),$code);
 		if(!$noJS){
