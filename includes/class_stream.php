@@ -1,0 +1,4 @@
+<?php
+if(!defined('KNPROXY_STREAMING_AVAILABLE'))
+	define('KNPROXY_STREAMING_AVAILABLE',1);
+?>
