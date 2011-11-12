@@ -13,6 +13,7 @@ class knHttp{
 	var $http_post = Array();
 	var $http_get = '';
 	var $ranges = false;
+	var $request_headers = Array();
 	protected $referer = '';
 	protected $streaming = false;
 	protected $mode = 'curl';
@@ -32,14 +33,21 @@ class knHttp{
 		if(!function_exists('curl_init'))
 			$this->mode = 'filesockets';
 	}
+	function set_request_headers($header = array()){
+		if(!is_array($header) || count($header)<2)
+			return;
+		$this->request_headers[$header[0]] = $header[1];
+		return;
+	}
 	function force_mode($mode = 'filesockets'){
 		$this->mode = $mode;
 	}
-	function set_referer($referer = false){
-		if($referer === false){
-			$this->referer = KNPROXY_REFERER;
-		}else{
-			$this->referer = $referer;
+	function set_referer($referer = 'none'){
+		switch($referer){
+			case 'pseudo': $this->referer = $this->url;break;
+			case 'none': $this->referer = '';break;
+			case 'auto': $this->referer = '';break;
+			default:return;
 		}
 	}
 	function set_url($url){
@@ -125,6 +133,12 @@ class knHttp{
 		}
 		@curl_setopt($ch, CURLOPT_REFERER,$this->referer);
 		@curl_setopt($ch,CURLOPT_AUTOREFERER,true);
+		if(count($this->request_headers)>0){
+			foreach($this->request_headers as $key=>$val){
+				$hdr[] = $key .': ' . $val;
+			}
+			@curl_setopt($ch, CURLOPT_HTTPHEADER,$hdr);
+		}
 		curl_setopt($ch, CURLOPT_USERAGENT, $this->user_agent);
 		curl_setopt($ch, CURLOPT_HEADER, true);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
@@ -168,14 +182,22 @@ class knHttp{
 		}
 		@curl_setopt($ch, CURLOPT_REFERER,$this->referer);
 		@curl_setopt($ch,CURLOPT_AUTOREFERER,true);
+		if(count($this->request_headers)>0){
+			foreach($this->request_headers as $key=>$val){
+				$hdr[] = $key .': ' . $val;
+			}
+			@curl_setopt($ch, CURLOPT_HTTPHEADER,$hdr);
+		}
 		curl_setopt($ch, CURLOPT_USERAGENT, $this->user_agent);
 		curl_setopt($ch, CURLOPT_HEADER, 0);
 		curl_setopt($ch, CURLOPT_BUFFERSIZE, 256);//BUF_SIZ
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($ch, CURLOPT_FILE, $fp);
 		curl_exec($ch);
+		$this->doctype = @curl_getinfo($ch,CURLINFO_CONTENT_TYPE);
 		curl_close($ch);
 		fclose($fp);
+		header('Content-Type: ' . $this->doctype);
 		if(is_resource($fp))
 			fclose($fp);
 		$fpN = fopen($tempName,'rb');
@@ -293,6 +315,12 @@ class knHttp{
 		}
 		@curl_setopt($ch, CURLOPT_REFERER,$this->referer);
 		@curl_setopt($ch,CURLOPT_AUTOREFERER,true);
+		if(count($this->request_headers)>0){
+			foreach($this->request_headers as $key=>$val){
+				$hdr[] = $key .': ' . $val;
+			}
+			@curl_setopt($ch, CURLOPT_HTTPHEADER,$hdr);
+		}
 		curl_setopt($ch, CURLOPT_USERAGENT, $this->user_agent);
 		$raw = curl_exec($ch);
 		$this->doctype = @curl_getinfo($ch,CURLINFO_CONTENT_TYPE);
@@ -350,6 +378,25 @@ class knHttp{
 					case 'ACCEPT-RANGES':{
 						$head['ACCEPT_RANGES'] = preg_replace('~\s*~','',$pair[1]);
 					}break;
+					case 'CONTENT-RANGE':{
+						$head['CONTENT_RANGE'] = preg_replace('~\s*~','',$pair[1]);;
+					}break;
+					case 'CACHE-CONTROL':{
+						$head['CACHE_CONTROL'] = preg_replace('~^\s*~','',$pair[1]);
+					}break;
+					case 'EXPIRES':{
+						$head['EXPIRES'] = preg_replace('~^\s*~','',$pair[1]);
+					}break;
+					case 'ETAG':{
+						$head['ETAG'] = preg_replace('~^\s*~','',$pair[1]);
+					}break;
+					case 'LAST-MODIFIED':{
+						$head['LAST_MODIFIED'] = preg_replace('~^\s*~','',$pair[1]);
+					}break;
+					case 'X-KNPROXY-LOCATION':{
+						//Allows for internal redirection protocol
+						$head['KNPROXY_LOCATION'] = @base64_decode(preg_replace('~^\s*~','',$pair[1]));
+					}
 					default:{
 						$head['UNKNOWN'] = Array($pair[0],$pair[1]);
 					}break;

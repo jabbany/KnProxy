@@ -16,6 +16,9 @@ $_LANG = KNPROXY_LANGUAGE;
 <script language="javascript" type="text/javascript">
 //<!--
 function checkAndEncode(){
+	if(document.getElementById("url_").value==''){
+		return false;
+	}
 	if(document.getElementById("check_enc").checked){
 		var random = Math.floor(Math.random() * 256)+1;
 		var url_value = document.getElementById("url_").value;

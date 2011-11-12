@@ -2,6 +2,7 @@
 include_once('conf.php');
 if(defined('KNPROXY_NAVBAR') && KNPROXY_NAVBAR=='true'){
 	header('Location: frames/');
+	header('X-KnProxy-Location: ' . base64_encode('about:index'));
 	exit();
 }
 ?>

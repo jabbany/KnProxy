@@ -1,10 +1,10 @@
 <?php
 function knproxy_i18n($string,$lang)
 {
-	if(!file_exists('i18n/' . $lang . '.ktr')){
+	if(!file_exists(dirname(__FILE__).'/../includes/i18n/' . $lang . '.ktr')){
 		return;//FAIL
 	}
-	$f=@file_get_contents('i18n/' . $lang . '.ktr');
+	$f=@file_get_contents(dirname(__FILE__).'/../includes/i18n/' . $lang . '.ktr');
 	$f_arr=explode("\n",$f);
 	foreach($f_arr as $f_)
 	{

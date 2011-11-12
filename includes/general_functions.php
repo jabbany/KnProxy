@@ -47,6 +47,6 @@ function fetch_error($code){
 	if($code!=0)
 		return $code . ' - ' . $errors[$code];
 	else
-		return 'cURL Operation Failed';
+		return 'Remote Fetch Operation Failed';
 }
 ?>

@@ -1,63 +1,14 @@
 <?php
+include_once(dirname(__FILE__). '/../frames/knproxy_i18n.php');
 function print_about_page($aboutType){
 	if(defined('DISABLE_ABOUT_PAGES') && DISABLE_ABOUT_PAGES == 'true'){
 		exit();
 	}
+	header('Content-Type: text/html');
 	$a = substr($aboutType,6,strlen($aboutType));
 	switch(strtolower($a)){
 		case 'cookies':{
-			echo '<html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" >
-<title>Cookie Manager</title>
-<script type="text/javascript">
-function delCookie(cname){
-	document.cookie=escape(cname) + "=deleted; Expires=Thu, 01-Jan-1970 00:00:01 GMT;";
-	document.cookie=escape(cname) + "=deleted; Expires=Thu, 01-Jan-1970 00:00:01 GMT; path=/;";
-}
-function delAllCookies(){
-	if(document.cookie=="")
-		return;
-	var arr=document.cookie.split(";");
-	for(i=0;i<arr.length;i++){
-		var tmp = arr[i].split("=");
-		document.cookie=delCookie(tmp[0]);
-	}
-	alert("Cookies Deleted!");
-}
-function cookieList(){
-	var arr=document.cookie.split(";");
-	var output="<table width=\"100%\" cellspacing=\"0\" cellpadding=\"0\"><tr><th>Cookie Name</th><th width=\"500\">Value</th><th width=\"100\">Delete?</th></tr>";
-	for(i=0;i<arr.length;i++){
-		var tmp = arr[i].split("=");
-		if(tmp.length>1){
-			output +="<tr><td>" + escape(tmp[0].replace(/^\\s/,\'\')) + "</td><td>" + escape(tmp[1]) + "</td><td><a href=\"javascript:delCookie(\'" + tmp[0] + "\');document.getElementById(\'cookies\').innerHTML = cookieList();\">Delete</a></tr>"; 
-		}else{
-			//invalid cookie
-		}
-	}
-	if(arr.length==0){
-		output +="<tr><td>(Cookie Jar Empty)</td><td>N/A</td><td></td></tr>";
-	}
-	output+="</table>";
-	return output;
-}
-</script>
-<style>
-body {font-family: Arial,Verdana, "Lucida Grande","微软雅黑","Microsoft Yahei", Helvetica, sans-serif}
-em {color:#0000FF; }
-.a {color:#FF0000;}
-table td,table th{border:1px solid #000;padding:3px;}
-th{background:#ccccff;}
-</style>
-</head>
-<body><h2>Cookie Manager</h2>
-<p>Please use the cookie manager to manage your cookies on KnProxy. KnProxy does not always respect expiry times and will keep cookies as long as possible. All cookies are global in KnProxy. Deleting them frees up bandwidth and protects privacy.</p>
-<p><a href="javascript:delAllCookies();" onclick="delAllCookies();">Delete All Cookies</a></p>
-<h3>Current Cookies</h3><p id="cookies"></p>
-<script type="text/javascript">document.getElementById("cookies").innerHTML = cookieList();</script>
-<p>Please note that KnProxy uses a few cookies to mark status info: knproxy_ssl_warning, knLogin. Deleting these cookies may cause you to be logged out of a previous session!</p>
-</body></html>';
+			echo base64_decode(knproxy_i18n('cookie_manager',KNPROXY_LANGUAGE));
 		}break;
 		case 'sysinternals':{
 			echo'<html>
@@ -81,6 +32,8 @@ th{background:#ccccff;}
 		echo '<tr><td>GZIP Output</td><td>' . KNPROXY_USE_GZIP . '</td></tr>';
 		echo '<tr><td>GZIP Input</td><td>' . KNPROXY_ACCEPT_GZIP . '</td></tr>';
 		echo '<tr><td>Warn on HTTPS</td><td>' . KNPROXY_HTTPS_WARNING . '</td></tr>';
+		echo '<tr><td>Cache ETag</td><td>' . KNPROXY_ETAG . '</td></tr>';
+		echo '<tr><td>Cache Mode</td><td>' . KNPROXY_CACHE_MODE . '</td></tr>';
 		echo '<tr><td>Referer mode</td><td>' . KNPROXY_REFERER . '</td></tr>';
 		if(function_exists('curl_init')){
 			echo '<tr><td>cURL enabled?</td><td style="color:#00a000;">true</td></tr>';
@@ -97,9 +50,52 @@ th{background:#ccccff;}
 		echo '</table>';
 		echo '<a href="javascript:history.back();"><br>Go Back to Previous Page</a></p>
 </body></html>';
-		}
+		}break;
 		case 'debugging':{
-			echo '<h1>Debugging Interface</h1>';
+			echo '<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" >
+<title>Internal Server Error - KnProxy</title>
+<style>
+body {font-family: Arial,Verdana, "Lucida Grande","微软雅黑","Microsoft Yahei", Helvetica, sans-serif}
+h2 { color:#FF0000; }
+em {color:#0000FF; }
+.a {color:#FF0000;}
+table td,table th{border:1px solid #000;padding:3px;}
+th{background:#ccccff;}
+</style>
+</head>
+<body><h2>Debugging Interface</h2><p>Debugging interface is where developers can use direct connections to fetch data. You may set up your own HTTP request headers and fetch raw return data.</p></body></html>';
+		}break;
+		case 'stream_cache':{
+			echo '<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" >
+<title>Internal Server Error - KnProxy</title>
+<style>
+body {font-family: Arial,Verdana, "Lucida Grande","微软雅黑","Microsoft Yahei", Helvetica, sans-serif}
+h2 { color:#FF0000; }
+em {color:#0000FF; }
+.a {color:#FF0000;}
+table td,table th{border:1px solid #000;padding:3px;}
+th{background:#ccccff;}
+</style>
+</head>
+<body><h2>Stream Mode Cache</h2><p>Due to limitations in PHP, stream mode requires a cache to function. Files that have been streamed should be cleared from the cache, but interruptions may cause this to malfunction. Here is a list of the uncleaned cache files: </p><ul>';
+			$count=0;
+			$size=0;
+			if($handle = opendir(dirname(__FILE__) .'/temp/'))
+				while (false !== ($file = readdir($handle))) 
+				{
+					if ($file != "." && $file != '..' && $file != 'index.php') {
+						echo '<li>' . $file . ' ('. filesize(dirname(__FILE__) .'/temp/'.$file) .' bytes)</li>';
+					$size +=filesize(dirname(__FILE__) .'/temp/'.$file);
+					$count++;
+					}
+				}
+			echo '</ul><p>Total: ' . $count . ' file(s), taking up ' . $size . ' bytes.</p>';
+			echo '<p><form action="" method="post"><input type="button" name="do" value="Clean Up Now"/></form></p>';
+			echo '</body></html>';
 		}break;
 		case 'blank':
 		default:{

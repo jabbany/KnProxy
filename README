@@ -1,4 +1,13 @@
 -- Feature Upgrade (Ver 4.40) --
+-Added support for incremental downloads nd HTTP Range: Header
+-Processes ETags and other cache headers to let client more effeciently handle cache
+-i18n now works for the cookie manager
+-Supports a special header X-KnProxy-Location: [Base64 Encoded absolute URL]
+ Allows proxied server to serve up different pages if viewed by KnProxy and possibly to prevent looping
+-Fixed small error if URL field is empty (frames will embed)
+-Changed the Debugging page to provide more information.
+
+-- Feature Upgrade (Ver 4.40-beta) --
 -HTTP Request Module rewritten for better parsing of headers
 -Implemented HTTP sockets (very buggy) for compatability
  HTTP Sockets is only a fallback for cURL if it is not available

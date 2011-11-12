@@ -71,11 +71,17 @@ class knParser{
 			case 'text/javascript':
 			case 'application/javascript':
 			case 'application/x-javascript':$this->parseJS();break;
+			case 'video/mp4':
 			case 'image/gif':
 			case 'image/png':
 			case 'image/jpeg':$this->output = $this->source;break;
-			case 'text/html':
-			default:$this->parseHTML();break;
+			case 'text/html':$this->parseHTML();break;
+			default:{
+				if(substr($this->type,0,6)=='video/' || substr($this->type,0,6)=='audio/' || substr($this->type,0,12)=='application/')
+					$this->output = $this->source;
+				else
+					$this->parseHTML();
+			}break;
 		}
 		if($this->extraParseEngine!=false){
 			$this->output = $this->extraParseEngine->post($this->output,$this->type);

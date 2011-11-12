@@ -24,6 +24,10 @@ $knEncoder->serverKey = KNPROXY_SECRET;
 $knEncoder->setKey(0);
 /** Url Decrypted, Enc Engine Reinited **/
 if(strtolower(substr($url,0,6))=='about:'){
+	if($url=='about:index'){
+		header('Location: frames/dynami_index.php');
+		exit();
+	}
 	include_once('includes/module_about.php');
 	print_about_page($url);
 	exit();
@@ -34,6 +38,7 @@ if(strtolower(substr($url,0,6))=='about:'){
 	$url = checkHttpUrl($url);
 	//We need not init a parser instance here or any instance
 	$knHTTP = new knHTTP($url,true);
+	//Get header
 	$knHTTP->start_stream(true);//The Script will be terminated
 }
 $url = checkHttpUrl($url);
@@ -86,6 +91,20 @@ if(defined('KNPROXY_HTTPS_WARNING') && KNPROXY_HTTPS_WARNING != 'off')
 	}elseif($knHTTP->is_https && isset($_POST['yes'])){
 		setcookie('knprox_ssl_warning','off',2147483647);
 	}
+/** Handle Cached Requests **/
+if(isset($_SERVER['HTTP_IF_MODIFIED_SINCE']))
+	$knHTTP->set_request_headers(Array('If-Modified-Since',$_SERVER['HTTP_IF_MODIFIED_SINCE']));
+if(isset($_SERVER['HTTP_IF_MATCH']))
+	$knHTTP->set_request_headers(Array('If-Match',$_SERVER['HTTP_IF_MATCH']));
+if(isset($_SERVER['HTTP_IF_NONE_MATCH']))
+	$knHTTP->set_request_headers(Array('If-None-Match',$_SERVER['HTTP_IF_NONE_MATCH']));
+if(isset($_SERVER['HTTP_IF_UNMODIFIED_SINCE']))
+	$knHTTP->set_request_headers(Array('If-Unmodified-Since',$_SERVER['HTTP_IF_UNMODIFIED_SINCE']));
+if(isset($_SERVER['HTTP_IF_RANGE']))
+	$knHTTP->set_request_headers(Array('If-Range',$_SERVER['HTTP_IF_RANGE']));
+/** HTTP Ranges **/
+if(isset($_SERVER['HTTP_RANGE']))
+	$knHTTP->set_request_headers(Array('Range',$_SERVER['RANGE']));
 /** Send And Load **/
 $knHTTP->send();
 $headers = $knHTTP->refined_headers();
@@ -119,6 +138,10 @@ if(((int)$headers['HTTP_RESPONSE']>=400 && $headers['HTTP_RESPONSE']!=404) || (i
 /** Load The Page **/
 header('Content-Type: ' . $knHTTP->doctype);
 /** Need Redirection? **/
+if(isset($headers['KNPROXY_LOCATION']) && $headers['KNPROXY_LOCATION']!=""){
+	header('Location: ' . basename(__FILE__) . "?url=" . $knEncoder->encode($headers['KNPROXY_LOCATION']));
+	exit();
+}
 if(isset($headers['HTTP_LOCATION']) && $headers['HTTP_LOCATION']!=''){
 	$url = $knURL->getAbsolute($headers['HTTP_LOCATION']);
 	$knurl = $knEncoder->encode($url);
@@ -128,9 +151,34 @@ if(isset($headers['HTTP_LOCATION']) && $headers['HTTP_LOCATION']!=''){
 /** Downloads And Filename **/
 if(isset($headers['CONTENT_DISPOSITION']) && $headers['CONTENT_DISPOSITION']!='')
 	header('Content-Disposition: ' . $headers['CONTENT_DISPOSITION']);
+/** Cache Stuff **/
+if(!empty($headers['CACHE_CONTROL']))
+	header('Cache-Control: ' . $headers['CACHE_CONTROL']);
+if(!empty($headers['EXPIRES']))
+	header('Expires: ' . $headers['EXPIRES']);
+if(!defined('KNPROXY_CACHE_MODE') || KNPROXY_CACHE_MODE=="none"){
+	if(!empty($headers['LAST_MODIFIED']))
+		header('Last-Modified: ' . $headers['LAST_MODIFIED']);
+	if(defined('KNPROXY_ETAG'))
+		switch(KNPROXY_ETAG){
+			case 'forward':if(isset($headers['ETAG']) && !empty($headers['ETAG'])){header('ETag: ' . $headers['ETAG']);};break;
+			case 'generate':{
+				if(isset($headers['ETAG']) && !empty($headers['ETAG'])){
+					header('ETag: ' . $headers['ETAG']);
+				}else{
+					header('ETag: "' . md5($knHTTP->content) . '"');
+				}
+			}break;
+			case 'suppress':{
+				header('ETag: ');//Suppressed
+			}
+		}
+}
 /** Do a Range Check **/
 if(!empty($headers['ACCEPT_RANGES']))
 	header('Accept-Ranges: ' . $headers['ACCEPT_RANGES']);
+if(!empty($headers['CONTENT_RANGE']))
+	header('Content-Range: ' . $headers['CONTENT_RANGE']);
 /** Http Refresh Headers **/
 if(isset($headers['HTTP_REFRESH'])){
 	$pre=basename(__FILE__) . '?url=';
