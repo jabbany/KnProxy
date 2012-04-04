@@ -6,7 +6,7 @@ class knEncoder{
 	var $key=0;
 	var $serverKey='';
 	function __construct(){
-		$this->val2k = str_split('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789');
+		$this->val2k = str_split('z0y1x2w3v4u5t6s7r8q9pAoBnCmDlEkFjGiHhIgJfKeLdMcNbOaPQRSTUVWXYZ');
 		$this->myLoop = count($this->val2k); 
 		$this->reverse_me();
 		$this->key=0;

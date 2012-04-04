@@ -252,16 +252,16 @@ class knHttp{
 		//Create The HTTP Request
 		define('LB',"\r\n");
 		if(count($this->http_post))
-			$req = 'POST ' .  urlencode($urlObj->get_path($urlObj->base)) . ' HTTP/1.1' . LB;
+			$req = 'POST ' .  $urlObj->get_path($urlObj->base) . ' HTTP/1.1' . LB;
 		else
-			$req = 'GET ' .  urlencode($urlObj->get_path($urlObj->base)) . ' HTTP/1.1' . LB;
-		$req.='Host: ' . $urlObj->base['HOST'].LB;
-		$req.='User-Agent: ' . $this->user_agent.LB;
-		$req.='Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' .LB;
+			$req = 'GET ' .  $urlObj->get_path($urlObj->base) . ' HTTP/1.1' . LB;
+		$req .= 'Host: ' . $urlObj->base['HOST'] . LB;
+		$req .= 'User-Agent: ' . $this->user_agent . LB;
+		$req .= 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' . LB;
 		if(count($this->cookies) > 0)
-			$req.='Cookie: ' . $this->getCookies() .LB;
-		$req.='Connection: Close'.LB;
-		$req.=LB;
+			$req .= 'Cookie: ' . $this->getCookies() . LB;
+		$req .= 'Connection: Close'.LB;
+		$req .= LB;
 		//if(count($this->http_post)>0)
 		fputs($fp, $req);
 		$ret='';

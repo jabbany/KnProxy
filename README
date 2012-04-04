@@ -1,3 +1,9 @@
+-- New Release (Ver 4.50) --
+-Rewritten code in parser. Fixes problems in HTML parsing especially in dealing with javascript.
+	New code should break less JSes and *hopefully* make more ajax requests actually work.
+-Fixed bug in HTTP Request Module with websockets mode. [Note: Websockets mode still does not support POST forms!]
+-Fixed bug in tag parsing (does not eat delimiters)
+
 -- Feature Upgrade (Ver 4.40) --
 -Added support for incremental downloads nd HTTP Range: Header
 -Processes ETags and other cache headers to let client more effeciently handle cache

@@ -29,9 +29,6 @@ function checkAndEncode(){
 		return true;
 	}
 }
-var currentState={
-	logo:2
-}
 -->
 </script>
 <style>

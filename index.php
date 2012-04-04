@@ -54,6 +54,7 @@ $_SCRIPT =$_HOST . $_SERVER['SCRIPT_NAME'];
 $knURL = new knUrl();
 $knURL->setBaseurl($url);
 $knHTTP = new knHttp($url);
+
 /** Init them **/
 if(isset($_POST['knproxy_gettopost']) && $_POST['knproxy_gettopost']=='true'){
 	unset($_POST['knproxy_gettopost']);

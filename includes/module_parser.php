@@ -96,67 +96,123 @@ class knParser{
 			}
 		}
 	}
-	function parseRawCSS($css){
-		$css = preg_replace_callback('~(url|src)(\()\s*([^\s].*)\s*\)~iUs',array('self','parseSimpleURL'),$css);
-		$css = preg_replace_callback('~(@import\s*)(["\'\(])\s*([^\s].*)\s*["\'\)]~iUs',array('self','parseSimpleURL'),$css);
+	/** Below are the primary parse modules **/
+	protected function toAbsoluteUrl($urlField){
+		if($urlField == '')
+			return '';
+		if(strtolower(substr($urlField,0,5)) == 'data:' || strtolower(substr($urlField,0,1)) == '#'){
+			return $urlField;
+		}elseif(strtolower(substr($urlField,0,11)) == 'javascript:'){
+			return 'javascript:' . $this->jsParse(substr($urlField,10,strlen($urlField)));
+		}
+		$urlBase = $this->url->getAbsolute($urlField);
+		if($this->stdEncoder != false)
+			return $this->url_prefix . $this->stdEncoder->encode($urlBase);
+		return $urlBase;
+	}
+	/** Parser for non-html **/
+	protected function jsParse($js){
+		//Remove the comments
+		$replace = Array();
+		$ptr = 0;
+		$len = strlen($js);
+		$in = false;$temp = 0;$regex = false;$comment = false;$slcmt = false;
+		$lastStringIterator = '';
+		while($ptr < $len){
+			if(!$comment && $js[$ptr] =="\\"){$ptr+=2;continue;}
+			if(($js[$ptr] == "'" || $js[$ptr] == '"') && !$in && !$comment && !$regex && !$slcmt){
+				$li = $js[$ptr];$temp = $ptr;$in = true;
+				$ptr++;continue;
+			}
+			if($js[$ptr] == '/' && $js[$ptr+1] == '*' && !$in && !$regex && !$comment && !$slcmt) {$comment = true;$ptr++;continue;}
+			if($js[$ptr] == '/' && $ptr > 0 && $js[$ptr-1] == '*' && $comment) {$comment = false;$ptr++;continue;}
+			
+			if($js[$ptr] == '/' && $js[$ptr+1] == '/' && !$in && !$regex && !$comment && !$slcmt) {$slcmt = true;$ptr++;continue;}
+			if($slcmt && $js[$ptr] == "\n") {$slcmt = false;$ptr++;continue;}
+			
+			if($js[$ptr] == '/' && !$in && !$comment && !$slcmt){
+				//Might be A division sign!
+				if(!$regex){
+					$lookAhead = substr($js,$ptr + 1,256);
+					$lookBehind = substr($js,$ptr - 10,10);
+					if(preg_match('~[a-zA-Z0-9)]\s*$~iUs',$lookBehind) || !preg_match('~/~',$lookAhead)){
+						$ptr++;continue;
+					}
+				}
+				$regex = !$regex;
+				$ptr++;
+				continue;
+			}
+			if($js[$ptr] == $li && $in ){
+				$replace[] = Array($temp + 1,$ptr,$this->__cb_jsStr(substr($js,$temp+1,$ptr - $temp - 1)));
+				$temp = 0;
+				$in = false;
+			}
+			$ptr++;
+		}
+		$offset = 0;
+		foreach($replace as $r){
+			$before = substr($js,0,$r[0] + $offset);
+			$after = substr($js,$r[1] + $offset,strlen($js) + $offset);
+			$diff = strlen($r[2]) - $r[1] + $r[0];
+			$js = $before . $r[2] . $after;
+			$offset += $diff;
+		}
+		return $js;
+	}
+	protected function cssParse($css){
+		$css = preg_replace_callback('~(url|src)(\()\s*([^\s].*)\s*\)~iUs',array('self','__cb_std'),$css);
+		$css = preg_replace_callback('~(@import\s*)(["\'\(])\s*([^\s].*)\s*["\'\)]~iUs',array('self','__cb_std'),$css);
 		return $css;
 	}
-	function parseStyle($callback){
-		return $callback[1] . $callback[2]. $this->parseRawCSS($callback[3]) . $callback[2];
-	}
-	function parseCss($source = false){
-		if(!$source)
-			$css = $this->source;
-		elseif(is_array($source)){
-			$heading = $source[1];
-			$css = $source[2];
+	/** Below are the REGEX callbacks **/
+	protected function __cb_std($m){
+		/** Standard URL parse callback **/
+		$url = $m[3];
+		$delimiter = $m[2];
+		$method = $m[1];
+		$wrapper = '';
+		//Find Wrappers for the URL
+		if(preg_match('~^([\'"])(.+)\1$~iUs',$url,$wrp)){
+			$url = $wrp[2];
+			$wrapper = $wrp[1];
 		}
-		$css = $this->parseRawCSS($css);
-		if(!$source)
-			$this->output = $css;
-		else
-			return $heading . $css . '</style>';
+		$url = $wrapper . $this->toAbsoluteUrl($url) . $wrapper;
+		if($delimiter == '(')
+			return $method . '(' . $url . ')';
+		return $method . $delimiter . $url . $delimiter;
 	}
-	function parseJS(){	
-		$this->output = $this->source;//NOT IMPLEMENTED YET
+	protected function __cb_jsStr($jsStr){
+		//Unescape this
+		if(preg_match('~^http://(www\.)*w3\.org~',$jsStr))
+			return $jsStr;//This is for initing namespaces probably.
+		$unesc = preg_replace('~\\\\/~','/',$jsStr);
+		if(preg_match('~^https*://~',$unesc,$m) || preg_match('~^//~',$unesc,$m)){
+			//This string is probably an absolute address
+			if($unesc == $jsStr)
+				return $this->toAbsoluteUrl($m[1]) . '&x=';
+			else
+				return preg_replace('~/~',"\\/",$this->toAbsoluteUrl($m[1])) . '&x=';
+		}
+		if(preg_match('~^/~',$unesc) && (preg_match('~\..{0,5}$~',$unesc) || preg_match('~/[a-zA-Z0-9\-_=]$~iUs',$unesc))){
+			if($unesc == $jsStr)
+				return $this->toAbsoluteUrl($unesc) . '&x=';
+			else
+				return preg_replace('~/~',"\\/",$this->toAbsoluteUrl($unesc)) . '&x=';
+		}
+		if($unesc != $jsStr)
+			$esc = true;
+		$unesc = preg_replace_callback('~(href|src|codebase|url|action)\s*=\s*([\'\"])(?(2) (.*?)\\2 | ([^\s\>]+))~isx',array('self','__cb_url'),$unesc);
+		if($esc)
+			$unesc = preg_replace('~/~',"\\/",$unesc);
+		return $unesc;
 	}
-	function parseScriptTagURLReloc($url){
-		$delim = $url[1];
-		$urlA = $url[2];
-		$tmp = $this->decodeJSURL($urlA);
-		$urlDec = $this->url->getAbsolute($tmp[0]);
-		if($this->stdEncoder!=false)
-			$urlDec = $this->stdEncoder->encode($urlDec);
-		$urlDec = $this->escapeJS($this->url_prefix . $urlDec);
-		return 'location.replace(' . $delim . $urlDec . $delim . ')'; 
-	}
-	function parseScriptStrings($strings){
-		$str = $strings[2];
-		/*
-		if(preg_match('~^https*://~iUs',$str)){
-			$tmp = $this->url->getAbsolute($str);
-			$urlDec = $this->stdEncoder->encode($tmp);
-			return $strings[1] . $this->url_prefix . $urlDec . $strings[1];
-		}*/
-		$str = preg_replace_callback('~(href|src|codebase|url|action)\s*=\s*([\'\"])?(?(2) (.*?)\\2 | ([^\s\>]+))~isx',array('self','parseExtURL'),$str);
-		return $strings[1] . $str . $strings[1];
-	}
-	function parseScriptTag($matches){
-		$tagInner = preg_replace('~#knproxy_script_lt#~iUs','<',$matches[2]);
-		$tagInner = preg_replace('~\\\~','#knproxy_script_escape#',$tagInner);//REMOVE ESCAPES
-		$tagInner = preg_replace_callback('~([\'\"])(.+)\\1~',Array('self','parseScriptStrings'),$tagInner);
-		$tagInner = preg_replace_callback('~location\.replace\(([\'"])(.*)\\1\)~iUs',Array('self','parseScriptTagURLReloc'),$tagInner);
-		$tagInner = preg_replace('~#knproxy_script_escape#~','\\',$tagInner);
-		return '<script' . $matches[1] . '>' . $tagInner . '</script>';
-	}
-	function parseScriptPre($matches){
-		$tagInner = preg_replace('~<~iUs','#KNPROXY_SCRIPT_LT#',$matches[2]);
-		return '<script' . $matches[1] . '>' . $tagInner . '</script>';
-	}
-	function parseUrlHTML($match){
+	protected function __cb_htmlTag($match){
+		if($match[1][0] == '/')
+			return '<' . $match[1] . '>';
+		//echo $match[1] . "\n";
 		$is_pform=false;
 		if(preg_match('~^\s*form~iUs',$match[1])){
-			//This is a form
 			if(preg_match('~method\s*=~',$match[1])){
 				if(preg_match('~method\s*=\s*([\'\"]?)get~isx',$match[1])){
 					$match[1] = preg_replace('~(method)\s*=\s*([\'\"])?(?(2) (.*?)\\2 | ([^\s\>]+))~isx','$1="POST"',$match[1]);
@@ -169,93 +225,62 @@ class knParser{
 				$is_pform=true;
 			}
 		}
-		$code = preg_replace_callback('~(href|src|codebase|url|action)\s*=\s*([\'\"])?(?(2) (.*?)\\2 | ([^\s\>]+))~isx',array('self','parseExtURL'),$match[1]);
-		$code = preg_replace_callback('~(style\s*=\s*)([\'\"])(.*)\2~iUs',Array('self','parseStyle'),$code);
+		$code = preg_replace_callback('~(href|src|codebase|url|action)\s*=\s*([\'\"])?(?(2) (.*?)\\2 | ([^\s\>]+))~isx',array('self','__cb_url'),$match[1]);
+		$code = preg_replace_callback('~(style\s*=\s*)([\'\"])(.*)\2~iUs',Array('self','__cb_cssEmbed'),$code);
 		if($is_pform)
 			return '<' . $code . '><input type="hidden" name="knproxy_gettopost" value="true">';
 		return '<' . $code . '>';
 	}
-	function parseHTML(){
-		//BY FAR THE MOST DIFFICULT
-		//ONLY GET IN TAG ITEMS
-		$noJS = false;//FOR PREVENTING ERROR IN JS
-		$code = preg_replace_callback('~<script([^>]*)>(.*)</script>~iUs',Array('self','parseScriptPre'),$this->source);
-		if(preg_last_error()!=PREG_NO_ERROR){
-			$noJS = true;
-			$code = $this->source;
-		}
-		//ABOVE LINE ESCAPES THE < (lesser than) in JS SCRIPTS
-		$code = preg_replace_callback('~<([^!].*)>~iUs',Array('self','parseUrlHTML'),$code);
-		if(defined('KNPROXY_NAVBAR') && KNPROXY_NAVBAR=="true")
-			$code = preg_replace('~<\s*/\s*head\s*>~iUs','<script type="text/javascript" language="javascript">parent.fixed.document.getElementById(\'url_\').value=parent.fixed.knEncode.unBase64("' . base64_encode($this->url->output($this->url->base)) . '");</script></head>',$code);
-		$code = preg_replace_callback('~(<\s*style[^>]*>)(.*)<\s*/style\s*>~iUs',Array('self','parseCSS'),$code);
-		if(!$noJS){
-			$code = preg_replace_callback('~<script([^>]*)>(.*)<\s*/\s*script>~iUs',Array('self','parseScriptTag'),$code);
-		}
-		$this->output = $code;
-	}
-	function parseSimpleURL($matches){
-		$url = $matches[3];
-		$delimiter = $matches[2];
-		$method = $matches[1];
-		$url = preg_replace('~^"(.*)"$~iUs','$1',$url);//REMOVE FILTERS
-		$url = preg_replace('~^\s*(.*)\s*$~iUs','$1',$url);
-		$url = preg_replace('~^\'(.*)\'$~iUs','$1',$url);
-		if(strtolower(substr($url,0,5))=='data:')
-			return $method . '(' . $url . ')';
-		$url = $this->url->getAbsolute($url);
-		$encoder = $this->stdEncoder;
-		if($encoder!=false){
-			$url = $this->url_prefix . $encoder->encode($url);
-		}
-		if($delimiter =='(' )
-			return $method . '(' . $url . ')';
-		else
-			return $method . $delimiter . $url . $delimiter;
-	}
-	function decodeJSURL($jsURL){
-		$purl = preg_replace('~#knproxy_script_escape#~iUs','',$jsURL);
-		if($purl[0]=='"' || $purl[0]=="'")
-			$sep = $purl[0];
-		else
-			$sep = '';
-		$purl = preg_replace('~["\']~iUs','',$purl);
-		return Array($purl,$sep);
-	}
-	function escapeJS($text){
-		return preg_replace('~([/"\'])~','\\\$1',$text);
-	}
-	function parseExtURL($matches){
+	
+	protected function __cb_url($matches){
 		$method = $matches[1];
 		$delim = $matches[2];
 		if($delim=='')
 			$url = $matches[4];
 		else
 			$url = $matches[3];
-		if(substr($url,0,9)!='#knproxy_'){
-			if($url == '' || strtolower(substr($url,0,11)) == 'javascript:' || (isset($url[0]) && $url[0]=='#') || strtolower(substr($url,0,5))=='data:'){
-				return $method . '=' . $delim . $url . $delim . ' ';//NO PARSE
-			}
+		return $method . '=' . $delim . $this->toAbsoluteUrl($url) . $delim . ' ';
+	}
+	
+	protected function __cb_cssEmbed($m){
+		return $m[1] . $m[2] . $this->cssParse($m[3]) . $m[2];
+	}
+	protected function __cb_cssTag($m){
+		return $m[1] . $this->cssParse($m[2]) . '</style>';
+	}
+	
+	protected function __cb_escapeJSLT($matches){
+		$tagInner = preg_replace('~<~iUs','#KNPROXY_SCRIPT_LT#',$matches[2]);
+		return '<script' . $matches[1] . '>' . $tagInner . '</script>';
+	}
+	protected function __cbJSParser($matches){
+		$tagInner = preg_replace('~#knproxy_script_lt#~iUs','<',$matches[2]);
+		$tagInner = $this->jsParse($tagInner);
+		return '<script' . $matches[1] . '>' . $tagInner . '</script>';
+	}
+	/** End **/
+	function parseCss(){
+		$this->output = $this->cssParse($this->source);
+	}
+	function parseJS(){	
+		$this->output = $this->jsParse($this->source);
+	}
+	function parseHTML(){
+		$noJS = false;
+		$code = preg_replace_callback('~<script([^>]*)>(.*)</script>~iUs',Array('self','__cb_escapeJSLT'),$this->source);
+		//Prevents lt signs messing up the parser 
+		if(preg_last_error() != PREG_NO_ERROR){
+			$noJS = true;
+			$code = $this->source;
 		}
-		if(substr($url,0,23)=='#knproxy_script_escape#' && $delim==''){
-			$tpurl = $this->decodeJSURL($url);
-			if($tpurl!='#'){
-				$u = $this->url->getAbsolute($tpurl[0]);
-				$encoder = $this->stdEncoder;
-				if($encoder!=false)
-					$u = $this->url_prefix . $encoder->encode($u);
-				return $method . '=' . $this->escapeJS($tpurl[1].$u.$tpurl[1]);
-			}else{
-				return $method . '=' . $this->escapeJS($tpurl[1] . '#' . $tpurl[1]);
-			}
+		$code = preg_replace_callback('~<([^!].*)>~iUs',Array('self','__cb_htmlTag'),$code);
+		if(defined('KNPROXY_NAVBAR') && KNPROXY_NAVBAR=="true")
+			$code = preg_replace('~<\s*/\s*head\s*>~iUs','<script type="text/javascript" language="javascript">parent.fixed.document.getElementById(\'url_\').value=parent.fixed.knEncode.unBase64("' . base64_encode($this->url->output($this->url->base)) . '");</script></head>',$code);
+		$code = preg_replace_callback('~(<\s*style[^>]*>)(.*)<\s*/style\s*>~iUs',Array('self','__cb_cssTag'),$code);
+		if(!$noJS){
+			$code = preg_replace_callback('~<script([^>]*)>(.*)<\s*/\s*script>~iUs',Array('self','__cbJSParser'),$code);
 		}
-		$url = $this->url->getAbsolute($url);
-		$encoder = $this->stdEncoder;
-		if($encoder!=false){
-			$url = $this->url_prefix . $encoder->encode($url);
-		}
-		$new = $method . '=' . $delim . $url . $delim . ' ';
-		return $new;
+		$this->output = $code;
 	}
 }
 
