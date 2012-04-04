@@ -26,7 +26,7 @@ th{background:#ccccff;}
 </head>
 <body><h2>About : SysInternals</h2><p>Here you can find default values for your installation of KnProxy. To disable this page, please set \'DISABLE_ABOUT_PAGES\' to true in the conf.php file!</p><table width="100%" cellpadding="0" cellspacing="0">';
 		echo '<tr><th width="300px">Key</th><th>Value</th></tr>';
-		echo '<tr><td>Version</td><td>KnProxy 4.40 - Beta</td></tr>';
+		echo '<tr><td>Version</td><td>KnProxy 4.5</td></tr>';
 		echo '<tr><td>GUI Language</td><td>' . KNPROXY_LANGUAGE . '</td></tr>';
 		echo '<tr><td>Navbar Enabled</td><td>' . KNPROXY_NAVBAR . '</td></tr>';
 		echo '<tr><td>GZIP Output</td><td>' . KNPROXY_USE_GZIP . '</td></tr>';
