@@ -3,7 +3,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" >
 <title>Internal Server Error - KnProxy</title>
 <style>
-body {font-family: Arial,Verdana, "Lucida Grande","微软雅黑","Microsoft Yahei", Helvetica, sans-serif}
+body {font-family: Arial,Verdana, "Lucida Grande","Microsoft Yahei", Helvetica, sans-serif}
 h2 { color:#FF0000; }
 em {color:#0000FF; }
 .a {color:#FF0000;}

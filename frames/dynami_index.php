@@ -8,9 +8,9 @@ $_LANG = KNPROXY_LANGUAGE;
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" >
 <style>
 .copyright{font: 0.8em Verdana, "Lucida Grande", Arial, Helvetica, sans-serif;}
-.options{font-size:0.95em; font-family:"微软雅黑", "Microsoft Yahei", "黑体", "Heiti" , Verdana, "Lucida Grande", Arial, Helvetica, sans-serif; }
+.options{font-size:0.95em; font-family:"Microsoft Yahei",Simsun,Simhei,Verdana,"Lucida Grande", Arial, Helvetica, sans-serif; }
 .urlbox{background-color:#FFFFCC;color: #FF0000;font-family: Arial;font-weight: bold;font-size: 1em;}
-<?php echo knproxy_translate('css',$_LANG,'.mymsg{font-family:"黑体","Heiti",Verdana;}');?>
+<?php echo knproxy_translate('css',$_LANG,'.mymsg{font-family:Simhei,Verdana;}');?>
 </style>
 </head>
 <body bgcolor="FFFFFF">
