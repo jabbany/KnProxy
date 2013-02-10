@@ -40,13 +40,13 @@ $_LANG = KNPROXY_LANGUAGE;
 	<style>
 	body{background: #000000;color: #ffffff;}
 	a{color: #ffffff;}
-	#urlx{position:relative; font-family: Arial;font-weight: bold;font-size: 1em;width:65%;}
+	#urlx{position:relative; font-family: Arial;font-weight: bold;font-size: 1em;width:60%;}
 	.mobilenoshow{float:right;padding-top:4px; padding-right:10px;}
 	@media only screen and (max-width: 1200px) {
-		#urlx{width:60%;}
+		#urlx{width:55%;}
 	}
 	@media only screen and (max-width: 1000px) {
-		#urlx{width:50%;}
+		#urlx{width:45%;}
 	}
 	@media only screen and (max-width: 800px) {
 		#urlx{position:absolute;left:90px;right:5px;width:auto;}
