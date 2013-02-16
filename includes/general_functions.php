@@ -18,6 +18,7 @@ function fetch_error($code){
 			408 => 'Request Timed Out',
 			409 => 'Conflict',
 			410 => 'Gone',
+			411 => 'Length Required',
 			414 => 'URI Too Long',
 			413 => 'Request Entity Too Large',
 			500 => 'Internal Server Error',

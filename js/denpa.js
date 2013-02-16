@@ -1,4 +1,4 @@
-var $ = function(e){
+function $(e){
 	return document.getElementById(e);
 }
 

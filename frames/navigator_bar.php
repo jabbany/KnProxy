@@ -11,8 +11,8 @@ $_LANG = KNPROXY_LANGUAGE;
 <html>
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" >
-	<script language="javascript" type="text/javascript" src="../js/denpa.js?2"></script>
-	<script language="javascript" type="text/javascript" src="../js/denjihou.js?2"></script>
+	<script language="javascript" type="text/javascript" src="../js/denpa.js?3"></script>
+	<script language="javascript" type="text/javascript" src="../js/denjihou.js?3"></script>
 	<script language="javascript" type="text/javascript">
 	//<!--
 	function checkAndEncode(){
@@ -21,7 +21,7 @@ $_LANG = KNPROXY_LANGUAGE;
 			alert("Resource Load Error");
 			return false;
 		}
-		if($("url_").value == "")
+		if($("urlx").value == "")
 			return false;
 
 		if($("check_enc").checked){

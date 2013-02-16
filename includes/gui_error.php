@@ -19,11 +19,12 @@ var k={tb:function(){var a = document.getElementById('ret_body');if(!a){alert();
 <p>The server met an error or was interrupted while trying to fulfill your request for <span style="font-family:monospace;"><?php echo preg_replace('~>~','&gt;',preg_replace('~<~','&lt;',$url));?></span>
 <br>Please check that this is a valid URL and that the remote server is not down.<br>
 The following information is the technical data of the request:
-<div style="font-family:monospace;background-color:#FFFFCC;margin-top:0px;padding:10px;word-wrap:break-all;word-break:break-all;overflow:hidden"><?php if($eobj['status']<1000) { ?>cURL returned : Request for <em class="a"><?php echo $knHTTP->url;?></em> was processed returning the following header : <br><em><?php echo $knHTTP->headers;?></em> (<?php echo strlen($knHTTP->headers);?> bytes)<br>
+<div style="font-family:monospace;background-color:#FFFFCC;margin-top:0px;padding:10px;word-wrap:break-all;word-break:break-all;overflow:hidden"><?php if(false && $eobj['status']<1000) { ?>cURL returned : Request for <em class="a"><?php echo $knHTTP->url;?></em> was processed returning the following header : <br><em><?php echo $knHTTP->headers;?></em> (<?php echo strlen($knHTTP->headers);?> bytes)<br>
 The whole of content returned was <?php echo strlen($knHTTP->content);?> bytes of data. The Content-Type determined was <em><?php if($knHTTP->doctype){echo $knHTTP->doctype;}else{echo '(Could not determine)';}?></em>
 <?php } else {
 	$header = $knHTTP->refined_headers();
 	echo 'Dumping knHTTP object: <br>';
+	echo '<em class="a">knHTTP request type:</em> ' . (count($knHTTP->http_post) == 0 ? "GET" : "POST") . '<br>';
 	echo '<em class="a">knHTTP request:</em> ' . preg_replace('~>~','&gt;',preg_replace('~<~','&lt;',$knHTTP->url)) . '<em>(' . strlen($knHTTP->url) . ' bytes)</em><br>';
 	if(isset($header['HTTP_LOCATION']))
 		echo '<em class="a">knHTTP redirect:</em> ' . $header['HTTP_LOCATION'] . '<br>';

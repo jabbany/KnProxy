@@ -251,18 +251,25 @@ class knHttp{
 		}
 		//Create The HTTP Request
 		define('LB',"\r\n");
-		if(count($this->http_post))
+		if(count($this->http_post) > 0){
+			$request = "POST";
 			$req = 'POST ' .  $urlObj->get_path($urlObj->base) . ' HTTP/1.1' . LB;
-		else
+		}else{
+			$request = "GET";
 			$req = 'GET ' .  $urlObj->get_path($urlObj->base) . ' HTTP/1.1' . LB;
+		}
+		
 		$req .= 'Host: ' . $urlObj->base['HOST'] . LB;
 		$req .= 'User-Agent: ' . $this->user_agent . LB;
+		if($request == "POST")
+			$req .= "Content-Length: " . strlen($this->getPost()) . LB;
 		$req .= 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' . LB;
 		if(count($this->cookies) > 0)
 			$req .= 'Cookie: ' . $this->getCookies() . LB;
 		$req .= 'Connection: Close'.LB;
 		$req .= LB;
-		//if(count($this->http_post)>0)
+		if($request == "POST")
+			$req .= $this->getPost();
 		fputs($fp, $req);
 		$ret='';
 		while ($line = fgets($fp)) $ret .= $line; 
@@ -300,7 +307,7 @@ class knHttp{
 			@curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
 			@curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
 		}
-		if(count($this->http_post)>0){
+		if(count($this->http_post) > 0){
 			curl_setopt($ch, CURLOPT_POST,count($this->http_post));
 			curl_setopt($ch, CURLOPT_POSTFIELDS,$this->getPost());
 		}
@@ -340,13 +347,13 @@ class knHttp{
 	}
 	function refined_headers(){
 		$headers = explode("\n",preg_replace('~\r~','',$this->headers));
+		$head = array();
 		if(is_array($headers) && count($headers)>0)
 		foreach($headers as $line){
 			if(preg_match('~^http/\d+.\d+\s(\d+)\s~iUs',$line,$matches)){
 				$head['HTTP_RESPONSE'] = (int)$matches[1];
 				continue;
-			}
-			else{
+			}else{
 				$pair = preg_split('~:~',$line,2);
 				switch(preg_replace('~\s~','',strtoupper($pair[0]))){
 					case 'LOCATION':{
@@ -375,6 +382,13 @@ class knHttp{
 						$m = explode(';',$pair[1]);
 						$head['HTTP_REFRESH'] = Array((int)$m[0],preg_replace('~^\s*url\s*=(.*)$~iUs','$1',$m[1]));
 					}break;
+					case 'CONTENT-TYPE':{
+						$this->doctype = $pair[1];
+						$head["CONTENT_TYPE"] = $pair[1];
+					}break;
+					case 'DATE':{
+						$head["DATE"] = $pair[1];
+					}break;
 					case 'ACCEPT-RANGES':{
 						$head['ACCEPT_RANGES'] = preg_replace('~\s*~','',$pair[1]);
 					}break;
@@ -398,7 +412,9 @@ class knHttp{
 						$head['KNPROXY_LOCATION'] = @base64_decode(preg_replace('~^\s*~','',$pair[1]));
 					}
 					default:{
-						$head['UNKNOWN'] = Array($pair[0],$pair[1]);
+						if(isset($pair[0]) && !empty($pair[0])){
+							$head['UNKNOWN'][] = Array($pair[0],$pair[1]);
+						}
 					}break;
 				}
 			}

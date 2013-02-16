@@ -42,6 +42,10 @@ if(strtolower(substr($url,0,6))=='about:'){
 	$knHTTP->start_stream(true);//The Script will be terminated
 }
 $url = checkHttpUrl($url);
+if($url == "http://" || $url == "https://"){
+	header('Location: frames/dynami_index.php');
+	exit();
+}
 /** Get the Scripts URL **/
 $_HOST = $_SERVER['HTTP_HOST'];
 if(strtolower(substr($_SERVER['HTTP_HOST'],0,4))!='http' && (!isset($_SERVER['HTTPS']) || $_SERVER['HTTPS']=='')){
@@ -123,6 +127,11 @@ if(isset($_GET['debug']) && $_GET['debug']=='true'){
 	exit();
 }
 /** Do some fancy stuff with the headers **/
+if(!isset($headers["HTTP_RESPONSE"])){
+	$eobj = Array("status"=> 1014);
+	include("includes/gui_error.php");
+	exit();
+}
 if($headers['HTTP_RESPONSE']==401){
 	//UNAUTHORIZED
 	$realm = $headers['WWW_AUTHENTICATE_REALM'];

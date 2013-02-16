@@ -27,6 +27,21 @@ class knParser{
 	function setMimeType($mime_type){
 		$mime_type=preg_replace('~;.*$~','',$mime_type);
 		$this->type=preg_replace('~\s~','',$mime_type);
+		if($this->type == ""){
+			/** Try to determine mime type from extension **/
+			if($this->url != null){
+				if(preg_match("~\.(.+)$~",$this->url->base["FILE"],$m)){
+					switch($m[1]){
+						case "css":$this->type = "text/css";break;
+						case "js":$this->type = "text/javascript";break;
+						case "htm":
+						case "html":$this->type = "text/html";break;
+						case "txt":$this->type = "text/txt";break;
+						default:$this->type = "";
+					}
+				}
+			}
+		}
 	}
 	function setCharset($mime_raw,$page_raw){
 		if(preg_match('~^.*;\s*charset\s*=\s*([a-zA-Z0-9\-]*)\s*[;]*$~',$mime_raw,$matches)){
@@ -143,7 +158,7 @@ class knParser{
 				$ptr++;
 				continue;
 			}
-			if($js[$ptr] == $li && $in ){
+			if(isset($li) && $js[$ptr] == $li && $in ){
 				$replace[] = Array($temp + 1,$ptr,$this->__cb_jsStr(substr($js,$temp+1,$ptr - $temp - 1)));
 				$temp = 0;
 				$in = false;
@@ -188,11 +203,10 @@ class knParser{
 			return $jsStr;//This is for initing namespaces probably.
 		$unesc = preg_replace('~\\\\/~','/',$jsStr);
 		if(preg_match('~^https*://~',$unesc,$m) || preg_match('~^//~',$unesc,$m)){
-			//This string is probably an absolute address
 			if($unesc == $jsStr)
-				return $this->toAbsoluteUrl($m[1]) . '&x=';
+				return $this->toAbsoluteUrl($unesc) . '&x=';
 			else
-				return preg_replace('~/~',"\\/",$this->toAbsoluteUrl($m[1])) . '&x=';
+				return preg_replace('~/~',"\\/",$this->toAbsoluteUrl($unesc)) . '&x=';
 		}
 		if(preg_match('~^/~',$unesc) && (preg_match('~\..{0,5}$~',$unesc) || preg_match('~/[a-zA-Z0-9\-_=]$~iUs',$unesc))){
 			if($unesc == $jsStr)
@@ -203,7 +217,7 @@ class knParser{
 		if($unesc != $jsStr)
 			$esc = true;
 		$unesc = preg_replace_callback('~(href|src|codebase|url|action)\s*=\s*([\'\"])(?(2) (.*?)\\2 | ([^\s\>]+))~isx',array('self','__cb_url'),$unesc);
-		if($esc)
+		if(isset($esc) && $esc)
 			$unesc = preg_replace('~/~',"\\/",$unesc);
 		return $unesc;
 	}
@@ -275,7 +289,7 @@ class knParser{
 		}
 		$code = preg_replace_callback('~<([^!].*)>~iUs',Array('self','__cb_htmlTag'),$code);
 		if(defined('KNPROXY_NAVBAR') && KNPROXY_NAVBAR=="true")
-			$code = preg_replace('~<\s*/\s*head\s*>~iUs','<script type="text/javascript" language="javascript">parent.fixed.document.getElementById(\'url_\').value=parent.fixed.knEncode.unBase64("' . base64_encode($this->url->output($this->url->base)) . '");</script></head>',$code);
+			$code = preg_replace('~<\s*/\s*head\s*>~iUs','<script type="text/javascript" language="javascript">parent.fixed.document.getElementById(\'urlx\').value=parent.fixed.knEncode.unBase64("' . base64_encode($this->url->output($this->url->base)) . '");</script></head>',$code);
 		$code = preg_replace_callback('~(<\s*style[^>]*>)(.*)<\s*/style\s*>~iUs',Array('self','__cb_cssTag'),$code);
 		if(!$noJS){
 			$code = preg_replace_callback('~<script([^>]*)>(.*)<\s*/\s*script>~iUs',Array('self','__cbJSParser'),$code);
