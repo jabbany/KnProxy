@@ -28,7 +28,7 @@ define('KNPROXY_ETAG','forward');
 define('KNPROXY_CACHE_MODE','none');
 
 //Show a warning when using HTTPS for the first time?
-define('KNPROXY_HTTPS_WARNING','on');//on, off
+define('KNPROXY_HTTPS_WARNING','off');//on, off
 // Referer mode
 define('KNPROXY_REFERER','pseudo');//pseudo, disable, auto
 define('KNPROXY_ENCRYPT_PAGE','false');//是否加密页面，一般来说GFW不强烈时没必要启用
@@ -36,6 +36,7 @@ define('KNPROXY_ENCRYPT_PAGE','false');//是否加密页面，一般来说GFW不
 //Only set to false if errors occur on JS-Rich pages 
 define('OPTIMIZE_JAVASCRIPT','false');//优化JS（去除注释，降低下载量）
 define('ENABLE_JS_PARSING','true');
+define('ENABLE_INJECTED_AJAXFIX','false');
 
 /** These values are for debugging **/
 define('KNPROXY_BINARY_CUTOFF',32*1024);//Cutoff of 32kb for binary data

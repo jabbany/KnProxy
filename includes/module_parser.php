@@ -127,6 +127,8 @@ class knParser{
 	}
 	/** Parser for non-html **/
 	protected function jsParse($js){
+		if(defined("ENABLE_JS_PARSING") && ENABLE_JS_PARSING == "false")
+			return $js;
 		//Remove the comments
 		$replace = Array();
 		$ptr = 0;
@@ -289,7 +291,11 @@ class knParser{
 		}
 		$code = preg_replace_callback('~<([^!].*)>~iUs',Array('self','__cb_htmlTag'),$code);
 		if(defined('KNPROXY_NAVBAR') && KNPROXY_NAVBAR=="true")
-			$code = preg_replace('~<\s*/\s*head\s*>~iUs','<script type="text/javascript" language="javascript">parent.fixed.document.getElementById(\'urlx\').value=parent.fixed.knEncode.unBase64("' . base64_encode($this->url->output($this->url->base)) . '");</script></head>',$code);
+			$code = preg_replace('~<\s*/\s*head\s*>~iUs','<script type="text/javascript" language="javascript">if(parent !=  null && parent.fixed != null){parent.fixed.document.getElementById(\'urlx\').value=parent.fixed.knEncode.unBase64("' . base64_encode($this->url->output($this->url->base)) . '");}</script></head>',$code);
+		
+		if(defined("ENABLE_INJECTED_AJAXFIX") && ENABLE_INJECTED_AJAXFIX == "true"){
+			$code = preg_replace("~<\s*head\s*>~iUs",'<head><script type="text/javascript" language="javascript" src="js/ajaxfix.js"></script>',$code);
+		}
 		$code = preg_replace_callback('~(<\s*style[^>]*>)(.*)<\s*/style\s*>~iUs',Array('self','__cb_cssTag'),$code);
 		if(!$noJS){
 			$code = preg_replace_callback('~<script([^>]*)>(.*)<\s*/\s*script>~iUs',Array('self','__cbJSParser'),$code);

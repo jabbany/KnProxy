@@ -6,6 +6,44 @@ require_once('includes/module_url.php');
 require_once('includes/module_http.php');
 require_once('includes/general_functions.php');
 
+function extractSettings($settingName,$default = null){
+	if(isset($_COOKIE["knp_settings"])){
+		$v = explode(",",$_COOKIE["knp_settings"]);
+		foreach($v as $s){
+			$sk = explode("=",$s);
+			if(count($sk) > 1){
+				if($sk[0] == $settingName)
+					return $sk[1];
+			}
+		}
+	}
+	return $default;
+}
+
+function commitSettings($key, $value){
+	if(isset($_COOKIE["knp_settings"]))
+		$v = explode(",",$_COOKIE["knp_settings"]);
+	else
+		$v = array();
+	$settings = array();
+	$found = false;
+	foreach($v as $s){
+		$sk = explode("=",$s);
+		if(count($sk) > 1){
+				if($sk[0] == $key){
+				$sk[1] = $value;
+				$found = true;
+			}
+				$settings[] = $sk[0] . "=" . $sk[1];
+		}
+	}
+	if(!$found){
+		$settings[] = $key . "=" . $value;
+	}
+	$_COOKIE["knp_settings"] = implode(",",$settings);
+	return $_COOKIE["knp_settings"];
+}
+
 $knEncoder = new knEncoder();
 if(!isset($_GET['url']) || $_GET['url']==''){
 	include('index.inc.php');
@@ -89,13 +127,18 @@ if(!empty($_POST['knUSER']) || isset($_COOKIE['__knLogin'])){
 		setcookie('__knLogin',implode('|',$a),2147364748);
 	}
 }
+
 /** See if we should give out an HTTPS warning **/
-if(defined('KNPROXY_HTTPS_WARNING') && KNPROXY_HTTPS_WARNING != 'off')
-	if($knHTTP->is_https==true && (!isset($_COOKIE['knprox_ssl_warning']) || $_COOKIE['knprox_ssl_warning']!='off') && !isset($_POST['yes'])){
-		include_once('includes/gui_notice.php');exit();
-	}elseif($knHTTP->is_https && isset($_POST['yes'])){
-		setcookie('knprox_ssl_warning','off',2147483647);
+if(defined('KNPROXY_HTTPS_WARNING') && KNPROXY_HTTPS_WARNING != 'off'){
+	if(!preg_match("~(\.js|\.css)$~iUs",$knURL->base["PATH"])){
+		if($knHTTP->is_https && extractSettings("https_warning","on") != "off" && !isset($_POST['yes'])){
+			include_once('includes/gui_notice.php');exit();
+		}elseif($knHTTP->is_https && isset($_POST['yes'])){
+			setcookie("knp_settings",commitSettings("https_warning","off"),2147480000);
+		}
 	}
+}
+
 /** Handle Cached Requests **/
 if(isset($_SERVER['HTTP_IF_MODIFIED_SINCE']))
 	$knHTTP->set_request_headers(Array('If-Modified-Since',$_SERVER['HTTP_IF_MODIFIED_SINCE']));
@@ -197,12 +240,15 @@ if(isset($headers['HTTP_REFRESH'])){
 
 if(isset($headers['HTTP_COOKIES']) && is_array($headers['HTTP_COOKIES']))
 	foreach($headers['HTTP_COOKIES'] as $cookie){
+		if($cookie[0] == "knp_settings" || $cookie[0] == "knp_login")
+			continue;
 		if($cookie[2]!=''){
 			$expires = strtotime($cookie[2]);
 			setcookie($cookie[0],$cookie[1],$expires);
 		}else{
 			setcookie($cookie[0],$cookie[1]);//Session cookie
 		}
+
 	}
 /** Parsing Process **/
 $knParser = new knParser($knURL,$knHTTP->content,$_SCRIPT . '?url=');
