@@ -12,6 +12,6 @@ KnProxy includes a document parser, url parser and session management module all
 KnProxy 某个诡异的网页代理
 =============
 KnProxy是一个轻量级的，基于PHP的网页代理。采用cURL或者PHP Sockets来将HTTP/HTTPS流量重新导流。KnProxy的设计意在实现最高的兼容性和最简单
-的假设。KnProxy可用于临时快速架设一个穿越G-F-W的安全的网络代理。
+的架设。KnProxy可用于临时快速架设一个穿越G-F-W的安全的网络代理。
 
 KnProxy一般不需要任何更改就可使用，不过你可以在设置中对其进行微调。
