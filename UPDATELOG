@@ -1,3 +1,6 @@
+-- Bugfix (Ver 4.50-bf1)
+-Fixed css parser to correctly handle empty url references like background-image:url()
+
 -- New Release (Ver 4.50) --
 -Rewritten code in parser. Fixes problems in HTML parsing especially in dealing with javascript.
 	New code should break less JSes and *hopefully* make more ajax requests actually work.

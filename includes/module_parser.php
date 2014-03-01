@@ -178,7 +178,7 @@ class knParser{
 		return $js;
 	}
 	protected function cssParse($css){
-		$css = preg_replace_callback('~(url|src)(\()\s*([^\s].*)\s*\)~iUs',array('self','__cb_std'),$css);
+		$css = preg_replace_callback('~(url|src)(\()\s*([^\s]*.*)\s*\)~iUs',array('self','__cb_std'),$css);
 		$css = preg_replace_callback('~(@import\s*)(["\'\(])\s*([^\s].*)\s*["\'\)]~iUs',array('self','__cb_std'),$css);
 		return $css;
 	}
