@@ -36,7 +36,7 @@ define('KNPROXY_ENCRYPT_PAGE','false');//是否加密页面，一般来说GFW不
 //Only set to false if errors occur on JS-Rich pages 
 define('OPTIMIZE_JAVASCRIPT','false');//优化JS（去除注释，降低下载量）
 define('ENABLE_JS_PARSING','true');
-define('ENABLE_INJECTED_AJAXFIX','false');
+define('ENABLE_INJECTED_AJAXFIX','true');
 
 /** These values are for debugging **/
 define('KNPROXY_BINARY_CUTOFF',32*1024);//Cutoff of 32kb for binary data

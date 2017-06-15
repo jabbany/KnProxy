@@ -255,7 +255,7 @@ class knParser{
 			$url = $matches[4];
 		else
 			$url = $matches[3];
-		return $method . '=' . $delim . $this->toAbsoluteUrl($url) . $delim . ' ';
+		return $method . '=' . $delim . $this->toAbsoluteUrl($url) . '&uA=' . $delim . ' ';
 	}
 	
 	protected function __cb_cssEmbed($m){
@@ -294,7 +294,7 @@ class knParser{
 			$code = preg_replace('~<\s*/\s*head\s*>~iUs','<script type="text/javascript" language="javascript">if(parent !=  null && parent.fixed != null){parent.fixed.document.getElementById(\'urlx\').value=parent.fixed.knEncode.unBase64("' . base64_encode($this->url->output($this->url->base)) . '");}</script></head>',$code);
 		
 		if(defined("ENABLE_INJECTED_AJAXFIX") && ENABLE_INJECTED_AJAXFIX == "true"){
-			$code = preg_replace("~<\s*head\s*>~iUs",'<head><script type="text/javascript" language="javascript" src="js/ajaxfix.js"></script>',$code);
+			$code = preg_replace("~<\s*head\s*>~iUs",'<head><script type="text/javascript">window._knpUrl = "' . $this->url->output($this->url->base) . '";</script><script type="text/javascript" language="javascript" src="js/ajaxfix.js"></script>',$code);
 		}
 		$code = preg_replace_callback('~(<\s*style[^>]*>)(.*)<\s*/style\s*>~iUs',Array('self','__cb_cssTag'),$code);
 		if(!$noJS){

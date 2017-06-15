@@ -49,15 +49,22 @@ if(!isset($_GET['url']) || $_GET['url']==''){
 	include('index.inc.php');
 	exit();
 }
+
 $url = $_GET['url'];
+$append = isset($_GET['uA']) ? $_GET['uA'] : '';
+
 $knEncoder->serverKey = KNPROXY_SECRET;
+
 if(isset($_GET['encrypt_key'])){
 	$key = (int)$_GET['encrypt_key'];
 	$knEncoder->setKey($key);
 	$knEncoder->serverKey='';
 }
-if(!preg_match('~/~',$url))
-	$url = $knEncoder->decode($url);
+
+if(!preg_match('~/~',$url)) {
+	$url = $knEncoder->decode($url) . $append;
+}
+
 $knEncoder->serverKey = KNPROXY_SECRET;
 $knEncoder->setKey(0);
 /** Url Decrypted, Enc Engine Reinited **/
