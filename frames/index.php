@@ -17,6 +17,6 @@ function url_change(URL){fixed.KN_BFORM.url.value=URL;}
 </HEAD>
 <FRAMESET rows="45,*" FRAMEBORDER="0" FRAMESPACING="0" BORDER="0" name="KNBROWSER_MAIN">
   <FRAME name="fixed" src="<?php echo $_KNPROXY_NAVIGATOR_PAGE;?>" marginwidth="2" marginheight="6" frameborder="0" noresize scrolling="no" >
-  <FRAME name="dynamic" src="dynami_index.php" frameborder="0" marginwidth="5" marginheight="5" >
+  <FRAME name="dynamic" src="<?php if(empty($_GET["url"])){echo("dynami_index.php");}else{echo("/index.php?url=" . $_GET['url']);} ?>" frameborder="0" marginwidth="5" marginheight="5" >
 </FRAMESET>
 </HTML>
