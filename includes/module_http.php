@@ -350,8 +350,8 @@ class knHttp{
 		$head = array();
 		if(is_array($headers) && count($headers)>0)
 		foreach($headers as $line){
-			if(preg_match('~^http/\d+.\d+\s(\d+)\s~iUs',$line,$matches)){
-				$head['HTTP_RESPONSE'] = (int)$matches[1];
+			if(preg_match('~^http/\d+(\.\d){0,1}\s(\d+)\s~iUs',$line,$matches)){
+				$head['HTTP_RESPONSE'] = (int)$matches[2];
 				continue;
 			}else{
 				$pair = preg_split('~:~',$line,2);
