@@ -1,3 +1,15 @@
+-- Major Overhaul (Ver 5.0)
+- Complete rewrite of request, rewrite and encoding module
+   - requests: much better handling of header forwarding/rewriting in requests/responses
+   - requests: support for http/2
+   - rewrite: option to use a proper HTML parser for rewrites
+   - rewrite: allows more fine-grained control over how to rewrite each resource
+   - engine: support server-side storage of client state to reduce request size
+   - engine: option to encode the cookies in-storage
+   - encoding: more efficient encoding scheme for URLs and encoded URLs
+- Added a new injected virtualizer to hande ajax requests
+   - handles capturing all facets of ajax natively via js on the client
+
 -- Bugfix (Ver 4.50-bf1)
 -Fixed css parser to correctly handle empty url references like background-image:url()
 
@@ -105,7 +117,7 @@
  ?somewhere=http://someaddress/somepath/?something or /somepath/http://somesite/somepath2/
 
 -- New Release (Ver 4.19) --
--Solved Warning Messages when php is in strict mode. 
+-Solved Warning Messages when php is in strict mode.
  (Thanks to bug report from zhongxiaolee AT gmail DOT com)
 -KNEN_SECRET allows you to define a salt for address encryption
  ( Graduated from -dev branch!)
@@ -129,7 +141,7 @@
 -Note: The DEV branch is for small features that are seasonal and used to defeat GFW
  They do not provide a big improvement if you are using outside of China or networks
  that have intensive censorship.
- DEV branches will have a chinese versionlog file to guide users. It will not be included 
+ DEV branches will have a chinese versionlog file to guide users. It will not be included
  in the main builds.
  Some features may eventually graduate from the dev into the main builds, others will only
  remain in dev.
@@ -150,7 +162,7 @@
  This new version solves problem with page encryption
  Small enhancement for users in China
 
- 
+
 -- New Release (Ver 4.07) --
 -Fixed bug in knHTTP module. Only one request is sent to get headers and body.
 -Fixed bug in parser for mime types
@@ -204,4 +216,3 @@ You can give a shift value for the encoding to avoid blacklists. Though currentl
 
 Enjoy~
 Author Jabbany
- 

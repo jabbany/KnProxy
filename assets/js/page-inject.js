@@ -15,8 +15,15 @@
     this._key = key;
   }
 
+  UrlEncoder.prototype._encrypt = function (str) {
+    
+    
+  }
+
   UrlEncoder.prototype.encode = function (url) {
-    return this._prefix;
+    // First make sure the url is encoded
+    const encodedUrl = encodeUri(url);
+    return this._prefix + this._encrypt(encodedUrl);
   }
 
   UrlEncoder.prototype.decode = function (encoded) {
