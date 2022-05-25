@@ -1,10 +1,52 @@
 <?php
-/*************
- * HTTP REQUEST MODULE FOR KNPROXY THETA
- * AUTHOR: CQZ
- **************/
-@include_once('class_stream.php');
-class knHttp{
+/**
+ * Http Request via PHP Curl and Sockets
+ *
+ **/
+class KnHttpResponse {
+  protected $httpVersion = '1.1';
+  protected $code = 100;
+  protected $headers = Array();
+  protected $cookies = Array();
+  protected $body = '';
+
+  function __construct ($rawResponse) {
+
+  }
+
+  private function _parseHeaders () {
+
+  }
+
+  public function getHeader($name, $default = '') {
+    return isset($this->headers[$name]) ? $this->headers[name] : $default;
+  }
+
+  public function inferContentType () {
+    /* Infer the content type intelligently */
+  }
+
+}
+
+class KnHttpRequest {
+  protected $httpVersion = '1.1';
+  protected $userAgent = '';
+  protected $headers = Array();
+  protected $mode = 'GET';
+
+  function __construct ($url, $stream = false) {
+
+  }
+
+  function setHeader ($name, $value) {
+
+  }
+
+
+  function send ($mode = 'GET') {
+    return new KnHttpResponse();
+  }
+
 	var $url='';
 	var $is_https=false;
 	var $user_agent='';
@@ -64,7 +106,7 @@ class knHttp{
 		foreach($getArray as $key=>$value){
 			$get[]=urlencode($key) . '=' . urlencode($value);
 		}
-		$this->http_get = implode('&',$get); 
+		$this->http_get = implode('&',$get);
 	}
 	function set_http_creds($unam,$pass){
 		if($unam!=false){
@@ -178,7 +220,7 @@ class knHttp{
 			@curl_setopt($ch, CURLOPT_USERPWD, $this->httpauth);
 		}
 		if(!defined('KNPROXY_ACCEPT_GZIP') || KNPROXY_ACCEPT_GZIP!="true"){
-			@curl_setopt($curl,CURLOPT_ENCODING,''); 
+			@curl_setopt($curl,CURLOPT_ENCODING,'');
 		}
 		@curl_setopt($ch, CURLOPT_REFERER,$this->referer);
 		@curl_setopt($ch,CURLOPT_AUTOREFERER,true);
@@ -258,7 +300,7 @@ class knHttp{
 			$request = "GET";
 			$req = 'GET ' .  $urlObj->get_path($urlObj->base) . ' HTTP/1.1' . LB;
 		}
-		
+
 		$req .= 'Host: ' . $urlObj->base['HOST'] . LB;
 		$req .= 'User-Agent: ' . $this->user_agent . LB;
 		if($request == "POST")
@@ -272,7 +314,7 @@ class knHttp{
 			$req .= $this->getPost();
 		fputs($fp, $req);
 		$ret='';
-		while ($line = fgets($fp)) $ret .= $line; 
+		while ($line = fgets($fp)) $ret .= $line;
 		fclose($fp);
 		$spl = preg_split('~\r*\n\r*\n~',$ret,2);
 		$this->headers = $spl[0];
@@ -282,10 +324,10 @@ class knHttp{
 			$this->headers .= "\n\r" . $splExt[0];
 			$spl[1] = $splExt[1];
 		}
-		
+
 		$this->content = $this->do_chunk_combine($spl[1]);
 	}
-	
+
 	function send(){
 		/** Added Support For Streaming Connections **/
 		if($this->streaming)
@@ -318,7 +360,7 @@ class knHttp{
 			@curl_setopt($ch, CURLOPT_USERPWD, $this->httpauth);
 		}
 		if(!defined('KNPROXY_ACCEPT_GZIP') || KNPROXY_ACCEPT_GZIP!="true"){
-			@curl_setopt($curl,CURLOPT_ENCODING,''); 
+			@curl_setopt($curl,CURLOPT_ENCODING,'');
 		}
 		@curl_setopt($ch, CURLOPT_REFERER,$this->referer);
 		@curl_setopt($ch,CURLOPT_AUTOREFERER,true);
@@ -357,7 +399,7 @@ class knHttp{
 				$pair = preg_split('~:~',$line,2);
 				switch(preg_replace('~\s~','',strtoupper($pair[0]))){
 					case 'LOCATION':{
-						$head['HTTP_LOCATION'] = preg_replace('~^\s*~','',$pair[1]);						
+						$head['HTTP_LOCATION'] = preg_replace('~^\s*~','',$pair[1]);
 					}break;
 					case 'SET-COOKIE':{
 						$cookie = explode(';',$pair[1]);
