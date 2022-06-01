@@ -1,4 +1,4 @@
--- Major Overhaul (Ver 5.0)
+-- Major Overhaul (Ver 6.0)
 - Complete rewrite of request, rewrite and encoding module
    - requests: much better handling of header forwarding/rewriting in requests/responses
    - requests: support for http/2

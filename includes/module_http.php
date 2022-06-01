@@ -4,13 +4,14 @@
  *
  **/
 class KnHttpResponse {
+  protected $httpBackend = 'curl';
   protected $httpVersion = '1.1';
   protected $code = 100;
   protected $headers = Array();
   protected $cookies = Array();
   protected $body = '';
 
-  function __construct ($rawResponse) {
+  function __construct ($rawResponse, $backend = 'curl') {
 
   }
 
@@ -18,12 +19,60 @@ class KnHttpResponse {
 
   }
 
+  public function hasHeader($name) {
+    return isset($this->headers[$name]);
+  }
+
   public function getHeader($name, $default = '') {
-    return isset($this->headers[$name]) ? $this->headers[name] : $default;
+    return $this->hasHeader($name) ? $this->headers[name] : $default;
   }
 
   public function inferContentType () {
     /* Infer the content type intelligently */
+  }
+
+  private function _hasEncoding($encoding) {
+    if (!$this->hasHeader('transfer-encoding')) {
+      return false;
+    }
+    $encodings = explode(',', $this->headers['transfer-encoding']);
+    foreach ($encodings as $value) {
+      if (strtolower(trim($value)) === $encoding) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private function _autoDecompress($rawBody) {
+    // Only decompress one type. Multiple layers of compression is silly.
+    if ($this->_hasEncoding('gzip')) {
+      return '';
+    }
+
+    if ($this->_hasEncoding('deflate')) {
+      return '';
+    }
+
+    if ($this->_hasEncoding('compress')) {
+      return '';
+    }
+
+    return $rawBody;
+  }
+
+  public function _autoCombineChunks($rawBody) {
+    if ($this->_hasEncoding('chunked')) {
+
+    }
+    return $rawBody;
+  }
+
+  public function getBody() {
+    $body = $this->body;
+    $body = $this->_autoCombineChunks($body);
+    $body = $this->_autoDecompress($body);
+    return $body;
   }
 
 }
@@ -32,19 +81,86 @@ class KnHttpRequest {
   protected $httpVersion = '1.1';
   protected $userAgent = '';
   protected $headers = Array();
-  protected $mode = 'GET';
+  protected $method = 'GET';
+  protected $url;
 
-  function __construct ($url, $stream = false) {
+  function __construct ($url, $method = 'GET') {
+    $this->url = $url;
+    $this->method = $method;
+  }
 
+  function setDefaultHeaders () {
+    $this->setHeader('host', $this->url->host .
+      ($this->url->port !== '' ? (':' . $this->url->port) : ''));
+    $this->setHeader('accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8');
+    $this->setHeader('accept-encoding', '*');
+    $this->setHeader('user-agent', 'Mozilla/5.0 (compatible; knproxy/6.0; +https://github.com/jabbany/knProxy)');
+    $this->setHeader('connection', 'close');
   }
 
   function setHeader ($name, $value) {
-
+    $this->headers[strtolower($name)] = $value;
   }
 
+  function send ($body = '') {
+    // Detect if curl exists, prefer it if it does
+    if (function_exists('curl_version')) {
+      $ch = curl_init();
+      curl_setopt($ch, CURLOPT_URL, $this->url->toString());
+      if ($this->url->scheme === 'https') {
+        @curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+  			@curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
+      }
+      if ($this->url->userinfo !== '') {
+        @curl_setopt($ch, CURLOPT_USERPWD, $this->url->userinfo);
+      }
+      @curl_setopt($ch, CURLOPT_REFERER, $this->referer);
+  		@curl_setopt($ch, CURLOPT_AUTOREFERER, true);
 
-  function send ($mode = 'GET') {
-    return new KnHttpResponse();
+      $response = curl_exec($ch);
+
+      curl_close($ch);
+
+      return new KnHttpResponse(, 'curl');
+    } else {
+      if ($this->url->protocol === 'https') {
+        $connection = @fsockopen(
+          'ssl://' . $this->url->host,
+          $this->url->port !== '' ? int($this->url->port) : 443,
+          $errno,
+          $errstr);
+      } else {
+        $connection = @fsockopen(
+          $this->url->host,
+          $this->url->port !== '' ? int($this->url->port) : 80,
+          $errno,
+          $errstr);
+      }
+      if (!$connection) {
+        return null;
+      }
+      @fputs($connection, $this->mode . ' ' . $this->url->path . ' ' .
+        $this->httpVersion . '\r\n');
+      // Header
+      foreach($this->headers as $key => $value) {
+        @fputs($connection, $key . ': ' . $value . '\r\n');
+      }
+      @fputs($connection, '\r\n');
+      if ($body !== '') {
+        @fputs($connection, $body);
+      }
+      $response = '';
+      while(!feof($connection)) {
+        $response .= @fgets($connection, 4096);
+      }
+      @fclose($connection)
+      return new KnHttpResponse($response, 'fsockets');
+    }
+  }
+
+  public function dump() {
+    // Create a summary to dump
+
   }
 
 	var $url='';
@@ -107,13 +223,6 @@ class KnHttpRequest {
 			$get[]=urlencode($key) . '=' . urlencode($value);
 		}
 		$this->http_get = implode('&',$get);
-	}
-	function set_http_creds($unam,$pass){
-		if($unam!=false){
-			$this->httpauth=$unam . ':' . $pass;
-		}else{
-			$this->httpauth='';
-		}
 	}
 	function getPost(){
 		$post = $this->http_post;
